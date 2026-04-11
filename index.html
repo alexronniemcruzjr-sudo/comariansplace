@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Comarian's Place — Book Your Stay</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sand: #f5f0e8;
+      --sand-dark: #e8e0d0;
+      --earth: #8b6f47;
+      --earth-dark: #5c4730;
+      --green: #3d5a3e;
+      --green-light: #5a7d5b;
+      --white: #fdfaf5;
+      --text: #2a2018;
+      --text-light: #6b5a45;
+      --accent: #c8a96e;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--white);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 48px;
+      background: rgba(253,250,245,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(139,111,71,0.1);
+      transition: all 0.3s;
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--earth-dark);
+      letter-spacing: 0.5px;
+    }
+    .nav-logo span { color: var(--green); font-style: italic; }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text-light);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--earth); }
+    .nav-book {
+      background: var(--green);
+      color: var(--white) !important;
+      padding: 10px 22px;
+      border-radius: 4px;
+      transition: background 0.2s !important;
+    }
+    .nav-book:hover { background: var(--green-light) !important; color: var(--white) !important; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #2d3f2e 0%, #4a5e3a 40%, #8b6f47 100%);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-content {
+      text-align: center; z-index: 1;
+      padding: 20px;
+      animation: fadeUp 1s ease both;
+    }
+    .hero-eyebrow {
+      font-size: 0.75rem; letter-spacing: 4px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 20px; font-weight: 400;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 300; line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+    .hero-title em { font-style: italic; color: var(--accent); }
+    .hero-sub {
+      font-size: 1rem; color: rgba(255,255,255,0.7);
+      max-width: 440px; margin: 0 auto 40px;
+      line-height: 1.7; font-weight: 300;
+    }
+    .hero-cta {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--earth-dark);
+      padding: 16px 40px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+    }
+    .hero-cta:hover { background: #d4b87a; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,169,110,0.4); }
+
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: rgba(255,255,255,0.4); font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;
+      animation: bounce 2s infinite;
+    }
+    .scroll-hint::after {
+      content: ''; width: 1px; height: 40px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+    }
+
+    /* SECTION */
+    section { padding: 100px 48px; max-width: 1200px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.7rem; letter-spacing: 4px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 12px; display: block;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400; line-height: 1.2;
+      color: var(--earth-dark);
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      color: var(--text-light); font-size: 0.95rem;
+      line-height: 1.8; max-width: 500px; font-weight: 300;
+    }
+
+    /* ABOUT */
+    .about-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+      align-items: center;
+    }
+    .about-img {
+      aspect-ratio: 4/5;
+      background: linear-gradient(135deg, var(--green) 0%, var(--earth) 100%);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .about-img::after {
+      content: '🌴';
+      position: absolute; bottom: 20px; right: 20px;
+      font-size: 4rem; opacity: 0.3;
+    }
+    .about-img-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+      color: rgba(255,255,255,0.5); font-size: 0.8rem; letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .about-img-placeholder svg { opacity: 0.4; }
+    .features { display: flex; flex-direction: column; gap: 20px; margin-top: 36px; }
+    .feature { display: flex; gap: 16px; align-items: flex-start; }
+    .feature-icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--green); display: flex; align-items: center;
+      justify-content: center; font-size: 1rem; flex-shrink: 0;
+    }
+    .feature-text h4 { font-size: 0.9rem; font-weight: 500; margin-bottom: 4px; color: var(--earth-dark); }
+    .feature-text p { font-size: 0.82rem; color: var(--text-light); line-height: 1.6; }
+
+    /* PRICING */
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
+    .pricing-card { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .pricing-card-header { padding: 24px 28px 20px; }
+    .pricing-card.peak .pricing-card-header { background: var(--green); }
+    .pricing-card.offpeak .pricing-card-header { background: var(--earth); }
+    .pricing-badge { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--white); }
+    .pricing-months { font-size: 0.8rem; color: rgba(255,255,255,0.75); margin-top: 6px; }
+    .pricing-rows { background: var(--white); padding: 8px 0; }
+    .pricing-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 28px; border-bottom: 1px solid var(--sand); }
+    .pricing-row:last-child { border-bottom: none; }
+    .pricing-day { font-size: 0.85rem; color: var(--text-light); }
+    .pricing-amount { font-size: 1.1rem; font-weight: 700; color: var(--green); }
+    .pricing-notes { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pricing-note { background: var(--sand); border-radius: 8px; padding: 12px 16px; font-size: 0.82rem; color: var(--text-light); line-height: 1.6; }
+    @media (max-width: 900px) { .pricing-grid { grid-template-columns: 1fr; } .pricing-notes { grid-template-columns: 1fr; } }
+
+    /* HOUSE RULES */
+    .rules-section { background: var(--sand); padding: 80px 0; }
+    .rules-section .section-label { display: block; margin-bottom: 12px; }
+    .rules-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 32px; }
+    .rule-card { background: var(--white); border-radius: 10px; padding: 24px 20px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; font-size: 1.8rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .rule-card h4 { font-size: 0.88rem; font-weight: 600; color: var(--earth-dark); margin-bottom: 4px; }
+    .rule-card p { font-size: 0.78rem; color: var(--text-light); line-height: 1.6; }
+    @media (max-width: 900px) { .rules-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 600px) { .rules-grid { grid-template-columns: 1fr; } }
+
+    /* AMENITIES */
+    .amenities-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 40px;
+    }
+    .amenity-card {
+      background: var(--white);
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .amenity-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .amenity-card-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .amenity-card-text h4 { font-size: 0.88rem; font-weight: 600; color: var(--earth-dark); margin-bottom: 4px; }
+    .amenity-card-text p { font-size: 0.78rem; color: var(--text-light); line-height: 1.5; }
+    @media (max-width: 900px) { .amenities-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .amenities-grid { grid-template-columns: 1fr; } }
+
+    /* ROOMS */
+    .rooms-section { background: var(--sand); padding: 100px 48px; }
+    .rooms-section > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+    .rooms-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+      margin-top: 48px;
+    }
+    .room-card {
+      background: var(--white);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .room-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .room-img {
+      aspect-ratio: 4/3;
+      background: linear-gradient(135deg, var(--green-light), var(--earth));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem;
+      position: relative;
+    }
+    .room-badge {
+      position: absolute; top: 12px; right: 12px;
+      background: var(--accent); color: var(--earth-dark);
+      font-size: 0.7rem; font-weight: 600; padding: 4px 10px;
+      border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .room-info { padding: 20px 24px 24px; }
+    .room-info h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem; font-weight: 600;
+      color: var(--earth-dark); margin-bottom: 6px;
+    }
+    .room-info p { font-size: 0.82rem; color: var(--text-light); line-height: 1.6; margin-bottom: 16px; }
+    .room-price {
+      display: flex; align-items: baseline; gap: 4px;
+      color: var(--green);
+    }
+    .room-price .amount { font-size: 1.4rem; font-weight: 500; }
+    .room-price .per { font-size: 0.75rem; color: var(--text-light); }
+    .room-amenities {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+    }
+    .amenity {
+      font-size: 0.7rem; padding: 3px 10px;
+      background: var(--sand); border-radius: 20px;
+      color: var(--text-light);
+    }
+
+    /* BOOKING */
+    .booking-section {
+      background: var(--earth-dark);
+      padding: 100px 48px;
+    }
+    .booking-section > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+    .booking-section .section-title { color: var(--white); }
+    .booking-section .section-sub { color: rgba(255,255,255,0.6); }
+
+    .booking-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 40px;
+      margin-top: 48px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    }
+    .booking-card h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem; font-weight: 600;
+      color: var(--earth-dark); margin-bottom: 28px;
+    }
+    .booking-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 16px; align-items: end;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label {
+      font-size: 0.72rem; font-weight: 500;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text-light);
+    }
+    .form-group input, .form-group select {
+      padding: 14px 16px;
+      border: 1.5px solid var(--sand-dark);
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      width: 100%;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(61,90,62,0.1);
+    }
+    .form-group input:disabled {
+      background: #f5f5f5;
+      color: #aaa;
+      cursor: not-allowed;
+    }
+    .book-btn {
+      background: var(--green);
+      color: var(--white);
+      border: none;
+      padding: 14px 32px;
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+    .book-btn:hover { background: var(--green-light); transform: translateY(-1px); }
+    .book-btn:active { transform: translateY(0); }
+
+    .booking-summary {
+      margin-top: 24px; padding: 20px 24px;
+      background: var(--sand);
+      border-radius: 8px;
+      display: none;
+      animation: fadeUp 0.4s ease both;
+    }
+    .booking-summary.show { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; }
+    .summary-item { display: flex; flex-direction: column; gap: 4px; }
+    .summary-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); }
+    .summary-value { font-size: 1rem; font-weight: 500; color: var(--earth-dark); }
+    .summary-value.highlight { color: var(--green); font-size: 1.2rem; }
+
+    .date-error {
+      font-size: 0.78rem; color: #e24b4a;
+      margin-top: 6px; display: none;
+    }
+
+    /* CONTACT */
+    .contact-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+      align-items: start;
+    }
+    .contact-info { display: flex; flex-direction: column; gap: 24px; margin-top: 32px; }
+    .contact-item { display: flex; gap: 16px; align-items: flex-start; }
+    .contact-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--sand); display: flex; align-items: center;
+      justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .contact-item h4 { font-size: 0.82rem; font-weight: 500; color: var(--earth-dark); margin-bottom: 4px; }
+    .contact-item p { font-size: 0.82rem; color: var(--text-light); line-height: 1.6; }
+    .contact-item a { color: var(--green); text-decoration: none; }
+    .contact-item a:hover { text-decoration: underline; }
+
+    .contact-form { display: flex; flex-direction: column; gap: 16px; }
+    .contact-form input, .contact-form textarea {
+      padding: 14px 16px;
+      border: 1.5px solid var(--sand-dark);
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+    .contact-form input:focus, .contact-form textarea:focus {
+      border-color: var(--green);
+    }
+    .contact-form textarea { min-height: 120px; }
+    .contact-btn {
+      background: var(--earth);
+      color: var(--white);
+      border: none;
+      padding: 14px 32px;
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+      align-self: flex-start;
+    }
+    .contact-btn:hover { background: var(--earth-dark); }
+
+    /* FOOTER */
+    footer {
+      background: var(--earth-dark); color: rgba(255,255,255,0.6);
+      text-align: center; padding: 32px 48px;
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    .footer-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem; color: var(--white);
+      margin-bottom: 8px; font-style: italic;
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      section { padding: 60px 24px; }
+      .rooms-section, .booking-section { padding: 60px 24px; }
+      .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 40px; }
+      .rooms-grid { grid-template-columns: 1fr; }
+      .booking-grid { grid-template-columns: 1fr 1fr; }
+      .book-btn { grid-column: 1/-1; }
+    }
+    @media (max-width: 600px) {
+      .booking-grid { grid-template-columns: 1fr; }
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--white); border-radius: 12px;
+      padding: 40px; max-width: 440px; width: 90%;
+      transform: scale(0.9); transition: transform 0.3s;
+      text-align: center;
+    }
+    .modal-overlay.show .modal { transform: scale(1); }
+    .modal h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem; color: var(--earth-dark); margin-bottom: 12px;
+    }
+    .modal p { color: var(--text-light); font-size: 0.9rem; line-height: 1.7; margin-bottom: 24px; }
+    .modal-close {
+      background: var(--green); color: var(--white);
+      border: none; padding: 12px 32px; border-radius: 6px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .modal-close:hover { background: var(--green-light); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Comarian's <span>Place</span></div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#amenities">Amenities</a></li>
+    <li><a href="#video-tour">Videos</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#rooms">Rooms</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#booking" class="nav-book">Book Now</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">Hotel & Resort</p>
+    <h1 class="hero-title">Comarian's<br/><em>Place</em></h1>
+    <p class="hero-sub">Sanctuary for every Season — a place to pause, breathe, and belong. Every stay feels like coming home.</p>
+    <a href="#booking" class="hero-cta">Reserve Your Stay</a>
+  </div>
+  <div class="scroll-hint">Scroll</div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-img" style="background:none;padding:0;">
+      <img src="villa.jpeg" alt="Comarian's Place Villa" style="width:100%;height:100%;object-fit:cover;border-radius:4px;"/>
+    </div>
+    <div>
+      <span class="section-label">About Us</span>
+      <h2 class="section-title">A Home Away<br/>From Home</h2>
+      <p class="section-sub">Nestled in a serene location, Comarian's Place offers comfortable accommodations with all the amenities you need for a relaxing stay. Whether you're here for a short visit or a long vacation, we make sure you feel at home.</p>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">🌿</div>
+          <div class="feature-text">
+            <h4>Nature Surroundings</h4>
+            <p>Wake up to fresh air and beautiful surroundings every morning.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">🛁</div>
+          <div class="feature-text">
+            <h4>Clean & Comfortable</h4>
+            <p>All rooms are well-maintained and cleaned before every check-in.</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">❤️</div>
+          <div class="feature-text">
+            <h4>Warm Hospitality</h4>
+            <p>Experience the warmth of genuine Filipino hospitality.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AMENITIES -->
+<section id="amenities">
+  <span class="section-label">What We Offer</span>
+  <h2 class="section-title">Amenities</h2>
+  <p class="section-sub">Everything you need for a complete and relaxing stay.</p>
+  <div class="amenities-grid">
+    <div class="amenity-card"><div class="amenity-card-icon">🏊</div><div class="amenity-card-text"><h4>Private Pools</h4><p>Adult and kiddie pool for your enjoyment.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">❄️</div><div class="amenity-card-text"><h4>3 Airconditioned Bedrooms</h4><p>Fully air-conditioned for your comfort.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">🛏️</div><div class="amenity-card-text"><h4>12 King & Queen Bunk Beds</h4><p>King and queen size bunk beds available.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">🚿</div><div class="amenity-card-text"><h4>3 Bathrooms with Heaters</h4><p>Hot and cold shower in all bathrooms.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">📺</div><div class="amenity-card-text"><h4>Home Theatre with Huge TV</h4><p>Sofa and big screen for movie nights.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">🌅</div><div class="amenity-card-text"><h4>Spacious Sala with Balcony</h4><p>Relax and enjoy the view from the balcony.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">🍽️</div><div class="amenity-card-text"><h4>16-Seater Dining Area</h4><p>Large dining space for the whole group.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">🎱</div><div class="amenity-card-text"><h4>Billiard Table</h4><p>Enjoy a game of billiards anytime.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">📶</div><div class="amenity-card-text"><h4>FREE WiFi Access</h4><p>Stay connected throughout your stay.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">🍖</div><div class="amenity-card-text"><h4>Grilling Area</h4><p>Perfect for BBQ and outdoor cooking.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">🎤</div><div class="amenity-card-text"><h4>Videoke, Board & Bingo Games</h4><p>Fun activities for the whole group.</p></div></div>
+    <div class="amenity-card"><div class="amenity-card-icon">🏀</div><div class="amenity-card-text"><h4>Basketball Court</h4><p>Half-court for sports lovers.</p></div></div>
+  </div>
+</section>
+
+<!-- VILLA -->
+<div class="rooms-section" id="rooms">
+  <div>
+    <span class="section-label">Accommodation</span>
+    <h2 class="section-title">The Villa</h2>
+    <p class="section-sub">A complete private villa experience — perfect for families, barkadas, and special occasions.</p>
+    <div style="margin-top:32px;background:var(--white);border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.1);display:flex;flex-wrap:wrap;">
+      <div style="flex:1;min-width:280px;min-height:320px;position:relative;overflow:hidden;">
+        <img src="villa.jpeg" alt="Comarian's Place Villa" style="width:100%;height:100%;object-fit:cover;"/>
+        <div style="position:absolute;top:16px;right:16px;background:var(--accent);color:var(--earth-dark);font-size:0.72rem;font-weight:700;padding:6px 14px;border-radius:20px;letter-spacing:0.5px;">Private Villa</div>
+      </div>
+      <div style="flex:2;min-width:280px;padding:36px 40px;">
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--earth-dark);margin-bottom:8px;">Comarian's Place Villa</h3>
+        <p style="font-size:0.88rem;color:var(--text-light);line-height:1.7;margin-bottom:24px;">A spacious and fully-equipped private villa ideal for groups, family reunions, barkada getaways, and special celebrations. Everything you need is here — from the pool to the billiard table!</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+          <div style="background:var(--sand);border-radius:8px;padding:14px 16px;">
+            <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:4px;">Max Capacity</div>
+            <div style="font-size:1.1rem;font-weight:700;color:var(--earth-dark);">20 Guests</div>
+          </div>
+          <div style="background:var(--sand);border-radius:8px;padding:14px 16px;">
+            <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:4px;">Bedrooms</div>
+            <div style="font-size:1.1rem;font-weight:700;color:var(--earth-dark);">3 Bedrooms</div>
+          </div>
+          <div style="background:var(--sand);border-radius:8px;padding:14px 16px;">
+            <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:4px;">Check-in</div>
+            <div style="font-size:1.1rem;font-weight:700;color:var(--earth-dark);">3:00 PM</div>
+          </div>
+          <div style="background:var(--sand);border-radius:8px;padding:14px 16px;">
+            <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:4px;">Check-out</div>
+            <div style="font-size:1.1rem;font-weight:700;color:var(--earth-dark);">12:00 PM</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);margin-bottom:2px;">Starting at</div>
+            <div style="font-size:1.8rem;font-weight:700;color:var(--green);">₱10,000 <span style="font-size:0.85rem;font-weight:400;color:var(--text-light);">/ night</span></div>
+          </div>
+          <a href="#booking" style="background:var(--green);color:var(--white);padding:14px 32px;border-radius:6px;text-decoration:none;font-size:0.9rem;font-weight:500;transition:background 0.2s;" onmouseover="this.style.background='#5a7d5b'" onmouseout="this.style.background='#3d5a3e'">Reserve Now</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VIDEO TOUR -->
+<div id="video-tour" style="background:#5c4730;padding:80px 48px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <span style="font-size:0.7rem;letter-spacing:4px;text-transform:uppercase;color:#c8a96e;margin-bottom:12px;display:block;">Video Tour</span>
+    <h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:400;color:#fdfaf5;margin-bottom:12px;line-height:1.2;">See It For Yourself</h2>
+    <p style="color:rgba(255,255,255,0.6);font-size:0.95rem;line-height:1.8;max-width:500px;margin-bottom:40px;">Take a virtual walkthrough of Comarian's Place — from the pool to the bedrooms, every corner of your home away from home.</p>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;">
+      <div style="border-radius:12px;overflow:hidden;position:relative;background:#1a1a1a;aspect-ratio:16/9;">
+        <video controls style="width:100%;height:100%;object-fit:cover;display:block;">
+          <source src="CP1.mp4" type="video/mp4"/>
+        </video>
+        <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:16px 14px 10px;color:#fff;font-size:0.8rem;font-weight:500;pointer-events:none;">🏡 Full Villa Tour</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div style="border-radius:10px;overflow:hidden;position:relative;background:#1a1a1a;aspect-ratio:16/9;">
+          <video controls style="width:100%;height:100%;object-fit:cover;display:block;">
+            <source src="CP2.mp4" type="video/mp4"/>
+          </video>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:12px 14px 8px;color:#fff;font-size:0.75rem;font-weight:500;pointer-events:none;">🏊 Pool & Outdoor Area</div>
+        </div>
+        <div style="border-radius:10px;overflow:hidden;position:relative;background:#1a1a1a;aspect-ratio:16/9;">
+          <video controls style="width:100%;height:100%;object-fit:cover;display:block;">
+            <source src="CP3.mp4" type="video/mp4"/>
+          </video>
+          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:12px 14px 8px;color:#fff;font-size:0.75rem;font-weight:500;pointer-events:none;">🛏️ Rooms & Interiors</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<section id="pricing">
+  <span class="section-label">Rates</span>
+  <h2 class="section-title">Pricing</h2>
+  <p class="section-sub">Transparent pricing for every season. First come, first serve basis.</p>
+  <div class="pricing-grid">
+    <div class="pricing-card peak">
+      <div class="pricing-card-header">
+        <span class="pricing-badge">Peak Season</span>
+        <p class="pricing-months">March, April, May, Holy Week, November, December</p>
+      </div>
+      <div class="pricing-rows">
+        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount">₱11,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount">₱13,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Saturday and Holidays</span><span class="pricing-amount">₱16,500</span></div>
+      </div>
+    </div>
+    <div class="pricing-card offpeak">
+      <div class="pricing-card-header">
+        <span class="pricing-badge offpeak-badge">Off-Peak Season</span>
+        <p class="pricing-months">January, February, June to October</p>
+      </div>
+      <div class="pricing-rows">
+        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount">₱10,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount">₱11,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Saturday</span><span class="pricing-amount">₱13,500</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="pricing-notes">
+    <div class="pricing-note">⚠️ Reservation is on a <strong>"FIRST COME FIRST SERVE BASIS"</strong> — the first to provide a downpayment secures the slot.</div>
+    <div class="pricing-note">💳 Downpayment is <strong>50% of the reservation (NON-REFUNDABLE)</strong>.</div>
+    <div class="pricing-note">🔒 A security deposit of <strong>₱3,000</strong> is required (refundable upon check-out if no damage).</div>
+    <div class="pricing-note">🐾 Pets are allowed — <strong>₱500 per pet</strong>.</div>
+    <div class="pricing-note">👥 Max sleeping capacity is <strong>20 guests</strong>. Excess guests have an extra charge per head.</div>
+    <div class="pricing-note">🔥 LPG usage is <strong>₱350 per day</strong>.</div>
+  </div>
+</section>
+
+<!-- HOUSE RULES -->
+<div class="rules-section">
+  <div style="max-width:1200px;margin:0 auto;padding:0 48px;">
+    <span class="section-label">Guidelines</span>
+    <h2 class="section-title">House Rules</h2>
+    <div class="rules-grid">
+      <div class="rule-card">⏰<div><h4>Check-in Time</h4><p>3:00 PM (Strictly no early check-in)</p></div></div>
+      <div class="rule-card">🚪<div><h4>Check-out Time</h4><p>12:00 PM / Overnight (Strictly no late check-out)</p></div></div>
+      <div class="rule-card">🚭<div><h4>No Smoking / Vaping</h4><p>Strictly no smoking or vaping inside the villa and pavillion.</p></div></div>
+      <div class="rule-card">👁️<div><h4>Ocular Visit Welcome</h4><p>You are welcome to visit! Please let us know in advance so we can schedule it without coinciding with other guests.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING -->
+<div class="booking-section" id="booking">
+  <div>
+    <span class="section-label" style="color:var(--accent);">Reservation</span>
+    <h2 class="section-title">Book Your Stay</h2>
+    <p class="section-sub">Pick your dates and room, and we'll confirm your reservation right away.</p>
+
+    <div class="booking-card">
+      <h3>Check Availability</h3>
+      <div class="booking-grid">
+        <div class="form-group">
+          <label>Check-in Date</label>
+          <input type="date" id="checkIn" placeholder="Check-in"/>
+          <span class="date-error" id="ciError">Please select a valid check-in date.</span>
+        </div>
+        <div class="form-group">
+          <label>Check-out Date</label>
+          <input type="date" id="checkOut" placeholder="Check-out" disabled/>
+          <span class="date-error" id="coError">Check-out must be after check-in.</span>
+        </div>
+        <div class="form-group">
+          <label>Room Type</label>
+          <select id="roomType">
+            <option value="">Select Package</option>
+            <option value="Villa - Mon to Thu (Peak)|11500">Peak: Mon–Thu — ₱11,500</option>
+            <option value="Villa - Fri & Sun (Peak)|13000">Peak: Fri & Sun — ₱13,000</option>
+            <option value="Villa - Sat & Holidays (Peak)|16500">Peak: Sat & Holidays — ₱16,500</option>
+            <option value="Villa - Mon to Thu (Off-Peak)|10000">Off-Peak: Mon–Thu — ₱10,000</option>
+            <option value="Villa - Fri & Sun (Off-Peak)|11500">Off-Peak: Fri & Sun — ₱11,500</option>
+            <option value="Villa - Saturday (Off-Peak)|13500">Off-Peak: Saturday — ₱13,500</option>
+          </select>
+        </div>
+        <button class="book-btn" onclick="submitBooking()">Reserve Now</button>
+      </div>
+      <div class="booking-summary" id="bookingSummary">
+        <div class="summary-item">
+          <span class="summary-label">Check-out</span>
+          <span class="summary-value" id="sumCheckOut">—</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Check-in</span>
+          <span class="summary-value" id="sumCheckIn">—</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Nights</span>
+          <span class="summary-value" id="sumNights">—</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Room</span>
+          <span class="summary-value" id="sumRoom">—</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Total</span>
+          <span class="summary-value highlight" id="sumTotal">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-grid">
+    <div>
+      <span class="section-label">Get In Touch</span>
+      <h2 class="section-title">We'd Love to<br/>Hear From You</h2>
+      <div class="contact-info">
+        <div class="contact-item">
+          <div class="contact-icon">📍</div>
+          <div>
+            <h4>Location</h4>
+            <p>Sitio Cubul San Nicholas II<br/>Magalang, Pampanga<br/>Philippines</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">📱</div>
+          <div>
+            <h4>Phone</h4>
+            <p>0916-479-3432</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">✉️</div>
+          <div>
+            <h4>Email</h4>
+            <p><a href="/cdn-cgi/l/email-protection#86e5e9ebe7f4efe7e8f5f6eae7e5e3c6e1ebe7efeaa8e5e9eb"><span class="__cf_email__" data-cfemail="6605090b07140f070815160a07050326010b070f0a4805090b">[email&#160;protected]</span></a><br/>
+            <a href="/cdn-cgi/l/email-protection#b6d5d9dbd7c4dfd7d8c598c6dad7d5d398d7c6c6f6d1dbd7dfda98d5d9db"><span class="__cf_email__" data-cfemail="10737f7d716279717e633e607c7173753e71606050777d71797c3e737f7d">[email&#160;protected]</span></a></p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">📘</div>
+          <div>
+            <h4>Facebook</h4>
+            <p><a href="https://www.facebook.com/comariansplace/" target="_blank">facebook.com/comariansplace</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="contact-form">
+        <input type="text" placeholder="Your Name"/>
+        <input type="email" placeholder="Email Address"/>
+        <input type="text" placeholder="Phone Number"/>
+        <textarea placeholder="Your message or inquiry..."></textarea>
+        <button class="contact-btn" onclick="sendMessage()">Send Message</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Comarian's Place</div>
+  <p>© 2025 Comarian's Place. All rights reserved.</p>
+  <p style="margin-top:6px;"><a href="https://www.facebook.com/comariansplace/" target="_blank">Facebook</a></p>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">🎉 Reservation Sent!</h2>
+    <p id="modalMsg">Thank you for your reservation! We will contact you shortly to confirm your booking.</p>
+    <button class="modal-close" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // Today's date in YYYY-MM-DD
+  function toDateStr(d) {
+    return d.toISOString().split('T')[0];
+  }
+
+  const today = new Date();
+  const todayStr = toDateStr(today);
+
+  const checkOutEl = document.getElementById('checkOut');
+  const checkInEl  = document.getElementById('checkIn');
+  const coError    = document.getElementById('coError');
+  const ciError    = document.getElementById('ciError');
+
+  // Step 1: Set today as min for check-in
+  checkInEl.min = todayStr;
+
+  // Step 2: When check-in is picked, enable check-out with min = checkin + 1 day
+  checkInEl.addEventListener('change', function() {
+    const ciVal = this.value;
+    ciError.style.display = 'none';
+
+    if (!ciVal) {
+      checkOutEl.disabled = true;
+      checkOutEl.value = '';
+      hideSummary();
+      return;
+    }
+
+    // Enable check-out and set its minimum to checkin date + 1 day
+    const ciDate = new Date(ciVal + 'T00:00:00');
+    const nextDay = new Date(ciDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    checkOutEl.min = toDateStr(nextDay);
+    checkOutEl.disabled = false;
+    checkOutEl.value = ''; // reset so user must re-pick
+    coError.style.display = 'none';
+    hideSummary();
+
+    // Focus check-out automatically
+    setTimeout(() => checkOutEl.focus(), 100);
+  });
+
+  // Step 3: When check-out is picked, show summary
+  checkOutEl.addEventListener('change', function() {
+    coError.style.display = 'none';
+    updateSummary();
+  });
+
+  function updateSummary() {
+    const ciVal = checkInEl.value;
+    const coVal = checkOutEl.value;
+    const roomVal = document.getElementById('roomType').value;
+
+    if (!ciVal || !coVal) { hideSummary(); return; }
+
+    const ciDate = new Date(ciVal + 'T00:00:00');
+    const coDate = new Date(coVal + 'T00:00:00');
+    const nights = Math.round((coDate - ciDate) / (1000*60*60*24));
+
+    if (nights <= 0) { hideSummary(); return; }
+
+    document.getElementById('sumCheckOut').textContent = formatDate(coVal);
+    document.getElementById('sumCheckIn').textContent  = formatDate(ciVal);
+    document.getElementById('sumNights').textContent   = nights + (nights === 1 ? ' night' : ' nights');
+
+    if (roomVal) {
+      const [name, price] = roomVal.split('|');
+      const total = parseInt(price) * nights;
+      document.getElementById('sumRoom').textContent  = name;
+      document.getElementById('sumTotal').textContent = '₱' + total.toLocaleString();
+    } else {
+      document.getElementById('sumRoom').textContent  = 'Not selected';
+      document.getElementById('sumTotal').textContent = '—';
+    }
+
+    document.getElementById('bookingSummary').classList.add('show');
+  }
+
+  function hideSummary() {
+    document.getElementById('bookingSummary').classList.remove('show');
+  }
+
+  function formatDate(str) {
+    const d = new Date(str + 'T00:00:00');
+    return d.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  document.getElementById('roomType').addEventListener('change', updateSummary);
+
+  function submitBooking() {
+    const ciVal = checkInEl.value;
+    const coVal = checkOutEl.value;
+    const roomVal = document.getElementById('roomType').value;
+    let valid = true;
+
+    if (!ciVal) { ciError.style.display = 'block'; valid = false; }
+    if (!coVal) { coError.style.display = 'block'; valid = false; }
+    if (!roomVal) { alert('Please select a room type.'); valid = false; }
+
+    if (!valid) return;
+
+    document.getElementById('modalTitle').textContent = '🎉 Reservation Received!';
+    document.getElementById('modalMsg').textContent =
+      'Thank you! Your reservation for ' + formatDate(ciVal) + ' to ' + formatDate(coVal) +
+      ' has been received. We will contact you via Facebook Messenger to confirm your booking.';
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function sendMessage() {
+    document.getElementById('modalTitle').textContent = '✉️ Message Sent!';
+    document.getElementById('modalMsg').textConten
