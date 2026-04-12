@@ -624,24 +624,51 @@
     <span class="section-label" style="color:var(--accent);">Gallery</span>
     <h2 class="section-title">Explore the Villa</h2>
     <p class="section-sub">Take a closer look at what awaits you at Comarian's Place.</p>
+    <!-- Villa Exterior -->
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Villa Exterior</h3>
     <div class="gallery-grid">
-      <div class="gallery-item" onclick="openLightbox(0)"><img src="01.jpeg" alt="Villa exterior" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(1)"><img src="02.jpeg" alt="Villa view" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(2)"><img src="03.jpeg" alt="Villa area" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(3)"><img src="04.jpeg" alt="Living area" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(4)"><img src="05.jpeg" alt="Bedroom" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(5)"><img src="06.jpeg" alt="Bedroom" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(6)"><img src="07.jpeg" alt="Interior" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(7)"><img src="08.jpeg" alt="Interior" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(8)"><img src="09.jpeg" alt="Amenity" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(9)"><img src="10.jpeg" alt="Basketball court" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(10)"><img src="11.jpeg" alt="Outdoor area" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(11)"><img src="12.jpeg" alt="Outdoor area" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(12)"><img src="13.jpeg" alt="Villa feature" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(13)"><img src="14.jpeg" alt="Villa feature" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(14)"><img src="15.jpg" alt="Pool area" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(15)"><img src="16.jpg" alt="Pool area" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(16)"><img src="17.jpg" alt="Outdoor" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(0)"><img src="01.jpeg" alt="Villa exterior day" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(1)"><img src="02.jpeg" alt="Villa exterior angle" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(2)"><img src="07.jpeg" alt="Villa night view" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(3)"><img src="09.jpeg" alt="Villa night pathway" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(4)"><img src="11.jpeg" alt="Villa event setup" loading="lazy"/></div>
+    </div>
+
+    <!-- Pool Area -->
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Pool Area</h3>
+    <div class="gallery-grid">
+      <div class="gallery-item" onclick="openLightbox(5)"><img src="15.jpg" alt="Pool covered" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(6)"><img src="16.jpg" alt="Pool view" loading="lazy"/></div>
+    </div>
+
+    <!-- Bedrooms -->
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Bedrooms</h3>
+    <div class="gallery-grid">
+      <div class="gallery-item" onclick="openLightbox(7)"><img src="03.jpeg" alt="Bunk beds gray" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(8)"><img src="04.jpeg" alt="Bunk bed single" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(9)"><img src="05.jpeg" alt="Bunk beds white" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(10)"><img src="14.jpeg" alt="Bunk beds wide" loading="lazy"/></div>
+    </div>
+
+    <!-- Bathroom -->
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Bathrooms</h3>
+    <div class="gallery-grid">
+      <div class="gallery-item" onclick="openLightbox(11)"><img src="08.jpeg" alt="Bathroom with heater" loading="lazy"/></div>
+    </div>
+
+    <!-- Dining -->
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Dining Area</h3>
+    <div class="gallery-grid">
+      <div class="gallery-item" onclick="openLightbox(12)"><img src="13.jpeg" alt="16-seater dining" loading="lazy"/></div>
+    </div>
+
+    <!-- Entertainment -->
+    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Entertainment & Recreation</h3>
+    <div class="gallery-grid">
+      <div class="gallery-item" onclick="openLightbox(13)"><img src="06.jpeg" alt="Home theatre" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(14)"><img src="17.jpg" alt="Sofa lounge" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(15)"><img src="12.jpeg" alt="Billiard table" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(16)"><img src="10.jpeg" alt="Basketball court" loading="lazy"/></div>
     </div>
   </div>
 </div>
@@ -1162,7 +1189,7 @@
   }
 
   // Lightbox
-  const galleryImages = ['01.jpeg','02.jpeg','03.jpeg','04.jpeg','05.jpeg','06.jpeg','07.jpeg','08.jpeg','09.jpeg','10.jpeg','11.jpeg','12.jpeg','13.jpeg','14.jpeg','15.jpg','16.jpg','17.jpg'];
+  const galleryImages = ['01.jpeg','02.jpeg','07.jpeg','09.jpeg','11.jpeg','15.jpg','16.jpg','03.jpeg','04.jpeg','05.jpeg','14.jpeg','08.jpeg','13.jpeg','06.jpeg','17.jpg','12.jpeg','10.jpeg'];
   let currentImg = 0;
 
   function openLightbox(idx) {
