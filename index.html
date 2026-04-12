@@ -1232,7 +1232,9 @@
         'Thank you, ' + guestName + '! Your reservation for ' + formatDate(ciVal) + ' to ' + formatDate(coVal) +
         ' (<strong>₱' + totalPrice.toLocaleString() + '</strong>) has been received.<br/><br/>' +
         'To secure your booking, please pay the <strong>50% downpayment (₱' + dpAmount.toLocaleString() + ')</strong>.' +
-        '<br/><br/><a href="' + payUrl + '" style="display:inline-block;background:#3d5a3e;color:#fdfaf5;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:500;font-size:0.9rem;">Pay Now</a>';
+        '<br/><br/><div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px;font-size:0.78rem;color:#92400e;line-height:1.6;text-align:left;margin-bottom:16px;">' +
+        '<strong>Reminder:</strong> The remaining 50% + ₱3,000 security deposit must be settled via online transaction <strong>1–2 days before check-in</strong>. No payments accepted on the day of staycation.</div>' +
+        '<a href="' + payUrl + '" style="display:inline-block;background:#3d5a3e;color:#fdfaf5;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:500;font-size:0.9rem;">Pay Now</a>';
       document.getElementById('modalOverlay').classList.add('show');
 
       // Reset form
