@@ -210,19 +210,64 @@
     .gallery-section > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
     .gallery-section .section-title { color: var(--white); }
     .gallery-section .section-sub { color: rgba(255,255,255,0.6); }
-    .gallery-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 32px;
+    .gallery-categories {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px;
     }
-    .gallery-item {
+    .gallery-cat {
+      border-radius: 12px; overflow: hidden; cursor: pointer; position: relative;
+      aspect-ratio: 4/3; transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .gallery-cat:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+    .gallery-cat img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s; filter: brightness(0.6);
+    }
+    .gallery-cat:hover img { transform: scale(1.05); filter: brightness(0.5); }
+    .gallery-cat-label {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 1;
+    }
+    .gallery-cat-label h3 {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.5rem;
+      font-weight: 600; color: var(--white); margin-bottom: 4px;
+    }
+    .gallery-cat-label span {
+      font-size: 0.75rem; color: rgba(255,255,255,0.7); letter-spacing: 1px;
+    }
+    @media (max-width: 900px) { .gallery-categories { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .gallery-categories { grid-template-columns: 1fr; } }
+
+    /* GALLERY POPUP */
+    .gallery-popup {
+      position: fixed; inset: 0; z-index: 250; background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .gallery-popup.show { opacity: 1; pointer-events: all; }
+    .gallery-popup-content {
+      background: var(--earth-dark); border-radius: 16px; max-width: 900px; width: 92%;
+      max-height: 85vh; overflow-y: auto; padding: 32px; position: relative;
+    }
+    .gallery-popup-content h3 {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.6rem;
+      color: var(--white); margin-bottom: 20px;
+    }
+    .gallery-popup-close {
+      position: absolute; top: 16px; right: 20px; background: none; border: none;
+      color: rgba(255,255,255,0.7); font-size: 1.8rem; cursor: pointer;
+    }
+    .gallery-popup-close:hover { color: white; }
+    .gallery-popup-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .gallery-popup-item {
       aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; cursor: pointer;
-      position: relative;
     }
-    .gallery-item img {
-      width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s;
+    .gallery-popup-item img {
+      width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;
     }
-    .gallery-item:hover img { transform: scale(1.08); }
-    @media (max-width: 900px) { .gallery-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 600px) { .gallery-grid { grid-template-columns: repeat(2, 1fr); } }
+    .gallery-popup-item:hover img { transform: scale(1.06); }
+    @media (max-width: 600px) { .gallery-popup-grid { grid-template-columns: repeat(2, 1fr); } }
 
     .lightbox {
       position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.92);
@@ -623,52 +668,41 @@
     <span class="section-label" style="color:var(--accent);">Gallery</span>
     <h2 class="section-title">Explore the Villa</h2>
     <p class="section-sub">Take a closer look at what awaits you at Comarian's Place.</p>
-    <!-- Villa Exterior -->
-    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Villa Exterior</h3>
-    <div class="gallery-grid">
-      <div class="gallery-item" onclick="openLightbox(0)"><img src="01.jpeg" alt="Villa exterior day" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(1)"><img src="02.jpeg" alt="Villa exterior angle" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(2)"><img src="07.jpeg" alt="Villa night view" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(3)"><img src="09.jpeg" alt="Villa night pathway" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(4)"><img src="11.jpeg" alt="Villa event setup" loading="lazy"/></div>
+    <div class="gallery-categories">
+      <div class="gallery-cat" onclick="openGalleryPopup('exterior')">
+        <img src="01.jpeg" alt="Villa Exterior" loading="lazy"/>
+        <div class="gallery-cat-label"><h3>Villa Exterior</h3><span>5 Photos</span></div>
+      </div>
+      <div class="gallery-cat" onclick="openGalleryPopup('pool')">
+        <img src="15.jpg" alt="Pool Area" loading="lazy"/>
+        <div class="gallery-cat-label"><h3>Pool Area</h3><span>2 Photos</span></div>
+      </div>
+      <div class="gallery-cat" onclick="openGalleryPopup('bedrooms')">
+        <img src="03.jpeg" alt="Bedrooms" loading="lazy"/>
+        <div class="gallery-cat-label"><h3>Bedrooms</h3><span>4 Photos</span></div>
+      </div>
+      <div class="gallery-cat" onclick="openGalleryPopup('bathroom')">
+        <img src="08.jpeg" alt="Bathrooms" loading="lazy"/>
+        <div class="gallery-cat-label"><h3>Bathrooms</h3><span>1 Photo</span></div>
+      </div>
+      <div class="gallery-cat" onclick="openGalleryPopup('dining')">
+        <img src="13.jpeg" alt="Dining Area" loading="lazy"/>
+        <div class="gallery-cat-label"><h3>Dining Area</h3><span>1 Photo</span></div>
+      </div>
+      <div class="gallery-cat" onclick="openGalleryPopup('entertainment')">
+        <img src="12.jpeg" alt="Entertainment" loading="lazy"/>
+        <div class="gallery-cat-label"><h3>Entertainment</h3><span>4 Photos</span></div>
+      </div>
     </div>
+  </div>
+</div>
 
-    <!-- Pool Area -->
-    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Pool Area</h3>
-    <div class="gallery-grid">
-      <div class="gallery-item" onclick="openLightbox(5)"><img src="15.jpg" alt="Pool covered" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(6)"><img src="16.jpg" alt="Pool view" loading="lazy"/></div>
-    </div>
-
-    <!-- Bedrooms -->
-    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Bedrooms</h3>
-    <div class="gallery-grid">
-      <div class="gallery-item" onclick="openLightbox(7)"><img src="03.jpeg" alt="Bunk beds gray" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(8)"><img src="04.jpeg" alt="Bunk bed single" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(9)"><img src="05.jpeg" alt="Bunk beds white" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(10)"><img src="14.jpeg" alt="Bunk beds wide" loading="lazy"/></div>
-    </div>
-
-    <!-- Bathroom -->
-    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Bathrooms</h3>
-    <div class="gallery-grid">
-      <div class="gallery-item" onclick="openLightbox(11)"><img src="08.jpeg" alt="Bathroom with heater" loading="lazy"/></div>
-    </div>
-
-    <!-- Dining -->
-    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Dining Area</h3>
-    <div class="gallery-grid">
-      <div class="gallery-item" onclick="openLightbox(12)"><img src="13.jpeg" alt="16-seater dining" loading="lazy"/></div>
-    </div>
-
-    <!-- Entertainment -->
-    <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--accent);margin-top:32px;margin-bottom:12px;">Entertainment & Recreation</h3>
-    <div class="gallery-grid">
-      <div class="gallery-item" onclick="openLightbox(13)"><img src="06.jpeg" alt="Home theatre" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(14)"><img src="17.jpg" alt="Sofa lounge" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(15)"><img src="12.jpeg" alt="Billiard table" loading="lazy"/></div>
-      <div class="gallery-item" onclick="openLightbox(16)"><img src="10.jpeg" alt="Basketball court" loading="lazy"/></div>
-    </div>
+<!-- GALLERY POPUP -->
+<div class="gallery-popup" id="galleryPopup" onclick="closeGalleryPopup(event)">
+  <div class="gallery-popup-content" onclick="event.stopPropagation()">
+    <button class="gallery-popup-close" onclick="closeGalleryPopup()">&times;</button>
+    <h3 id="galleryPopupTitle"></h3>
+    <div class="gallery-popup-grid" id="galleryPopupGrid"></div>
   </div>
 </div>
 
@@ -1187,33 +1221,62 @@
     document.getElementById('modalOverlay').classList.remove('show');
   }
 
-  // Lightbox
-  const galleryImages = ['01.jpeg','02.jpeg','07.jpeg','09.jpeg','11.jpeg','15.jpg','16.jpg','03.jpeg','04.jpeg','05.jpeg','14.jpeg','08.jpeg','13.jpeg','06.jpeg','17.jpg','12.jpeg','10.jpeg'];
+  // Gallery categories
+  const galleryData = {
+    exterior: { title: 'Villa Exterior', images: ['01.jpeg','02.jpeg','07.jpeg','09.jpeg','11.jpeg'] },
+    pool: { title: 'Pool Area', images: ['15.jpg','16.jpg'] },
+    bedrooms: { title: 'Bedrooms', images: ['03.jpeg','04.jpeg','05.jpeg','14.jpeg'] },
+    bathroom: { title: 'Bathrooms', images: ['08.jpeg'] },
+    dining: { title: 'Dining Area', images: ['13.jpeg'] },
+    entertainment: { title: 'Entertainment & Recreation', images: ['06.jpeg','17.jpg','12.jpeg','10.jpeg'] }
+  };
+
+  let currentCategory = [];
   let currentImg = 0;
 
+  function openGalleryPopup(cat) {
+    const data = galleryData[cat];
+    currentCategory = data.images;
+    document.getElementById('galleryPopupTitle').textContent = data.title;
+    const grid = document.getElementById('galleryPopupGrid');
+    grid.innerHTML = data.images.map(function(img, i) {
+      return '<div class="gallery-popup-item" onclick="openLightbox(' + i + ')"><img src="' + img + '" alt="' + data.title + '" loading="lazy"/></div>';
+    }).join('');
+    document.getElementById('galleryPopup').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeGalleryPopup(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('galleryPopup').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  // Lightbox
   function openLightbox(idx) {
     currentImg = idx;
-    document.getElementById('lightboxImg').src = galleryImages[idx];
+    document.getElementById('lightboxImg').src = currentCategory[idx];
     document.getElementById('lightbox').classList.add('show');
-    document.body.style.overflow = 'hidden';
   }
 
   function closeLightbox(e) {
     if (e && e.target !== e.currentTarget && e.target.tagName !== 'BUTTON') return;
     document.getElementById('lightbox').classList.remove('show');
-    document.body.style.overflow = '';
   }
 
   function navLightbox(dir) {
-    currentImg = (currentImg + dir + galleryImages.length) % galleryImages.length;
-    document.getElementById('lightboxImg').src = galleryImages[currentImg];
+    currentImg = (currentImg + dir + currentCategory.length) % currentCategory.length;
+    document.getElementById('lightboxImg').src = currentCategory[currentImg];
   }
 
   document.addEventListener('keydown', function(e) {
-    if (!document.getElementById('lightbox').classList.contains('show')) return;
-    if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowLeft') navLightbox(-1);
-    if (e.key === 'ArrowRight') navLightbox(1);
+    if (document.getElementById('lightbox').classList.contains('show')) {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') navLightbox(-1);
+      if (e.key === 'ArrowRight') navLightbox(1);
+    } else if (document.getElementById('galleryPopup').classList.contains('show')) {
+      if (e.key === 'Escape') closeGalleryPopup();
+    }
   });
 
   function closeMenu() {
