@@ -205,6 +205,46 @@
     .feature-text h4 { font-size: 0.9rem; font-weight: 500; margin-bottom: 4px; color: var(--earth-dark); }
     .feature-text p { font-size: 0.82rem; color: var(--text-light); line-height: 1.6; }
 
+    /* GALLERY */
+    .gallery-section { background: var(--earth-dark); padding: 80px 48px; }
+    .gallery-section > * { max-width: 1200px; margin-left: auto; margin-right: auto; }
+    .gallery-section .section-title { color: var(--white); }
+    .gallery-section .section-sub { color: rgba(255,255,255,0.6); }
+    .gallery-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 32px;
+    }
+    .gallery-item {
+      aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; cursor: pointer;
+      position: relative;
+    }
+    .gallery-item img {
+      width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s;
+    }
+    .gallery-item:hover img { transform: scale(1.08); }
+    .gallery-item:first-child { grid-column: span 2; grid-row: span 2; }
+    @media (max-width: 900px) { .gallery-grid { grid-template-columns: repeat(3, 1fr); } .gallery-item:first-child { grid-column: span 1; grid-row: span 1; } }
+    @media (max-width: 600px) { .gallery-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .lightbox {
+      position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.92);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .lightbox.show { opacity: 1; pointer-events: all; }
+    .lightbox img { max-width: 90%; max-height: 85vh; border-radius: 8px; object-fit: contain; }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 24px; background: none; border: none;
+      color: white; font-size: 2rem; cursor: pointer; z-index: 301;
+    }
+    .lightbox-nav {
+      position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15);
+      border: none; color: white; font-size: 1.5rem; padding: 12px 16px; cursor: pointer;
+      border-radius: 50%;
+    }
+    .lightbox-nav:hover { background: rgba(255,255,255,0.3); }
+    .lightbox-prev { left: 16px; }
+    .lightbox-next { right: 16px; }
+
     /* PRICING */
     .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
     .pricing-card { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
@@ -520,6 +560,7 @@
   </button>
   <ul class="nav-links">
     <li><a href="#about" onclick="closeMenu()">About</a></li>
+    <li><a href="#gallery" onclick="closeMenu()">Gallery</a></li>
     <li><a href="#amenities" onclick="closeMenu()">Amenities</a></li>
     <li><a href="#video-tour" onclick="closeMenu()">Videos</a></li>
     <li><a href="#pricing" onclick="closeMenu()">Pricing</a></li>
@@ -576,6 +617,42 @@
     </div>
   </div>
 </section>
+
+<!-- GALLERY -->
+<div class="gallery-section" id="gallery">
+  <div>
+    <span class="section-label" style="color:var(--accent);">Gallery</span>
+    <h2 class="section-title">Explore the Villa</h2>
+    <p class="section-sub">Take a closer look at what awaits you at Comarian's Place.</p>
+    <div class="gallery-grid">
+      <div class="gallery-item" onclick="openLightbox(0)"><img src="01.jpeg" alt="Villa exterior" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(1)"><img src="02.jpeg" alt="Villa view" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(2)"><img src="03.jpeg" alt="Villa area" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(3)"><img src="04.jpeg" alt="Living area" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(4)"><img src="05.jpeg" alt="Bedroom" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(5)"><img src="06.jpeg" alt="Bedroom" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(6)"><img src="07.jpeg" alt="Interior" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(7)"><img src="08.jpeg" alt="Interior" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(8)"><img src="09.jpeg" alt="Amenity" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(9)"><img src="10.jpeg" alt="Basketball court" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(10)"><img src="11.jpeg" alt="Outdoor area" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(11)"><img src="12.jpeg" alt="Outdoor area" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(12)"><img src="13.jpeg" alt="Villa feature" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(13)"><img src="14.jpeg" alt="Villa feature" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(14)"><img src="15.jpg" alt="Pool area" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(15)"><img src="16.jpg" alt="Pool area" loading="lazy"/></div>
+      <div class="gallery-item" onclick="openLightbox(16)"><img src="17.jpg" alt="Outdoor" loading="lazy"/></div>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation();navLightbox(-1)">&#8249;</button>
+  <img id="lightboxImg" src="" alt="Gallery photo"/>
+  <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation();navLightbox(1)">&#8250;</button>
+</div>
 
 <!-- AMENITIES -->
 <section id="amenities">
@@ -1083,6 +1160,35 @@
   function closeModal() {
     document.getElementById('modalOverlay').classList.remove('show');
   }
+
+  // Lightbox
+  const galleryImages = ['01.jpeg','02.jpeg','03.jpeg','04.jpeg','05.jpeg','06.jpeg','07.jpeg','08.jpeg','09.jpeg','10.jpeg','11.jpeg','12.jpeg','13.jpeg','14.jpeg','15.jpg','16.jpg','17.jpg'];
+  let currentImg = 0;
+
+  function openLightbox(idx) {
+    currentImg = idx;
+    document.getElementById('lightboxImg').src = galleryImages[idx];
+    document.getElementById('lightbox').classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox(e) {
+    if (e && e.target !== e.currentTarget && e.target.tagName !== 'BUTTON') return;
+    document.getElementById('lightbox').classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  function navLightbox(dir) {
+    currentImg = (currentImg + dir + galleryImages.length) % galleryImages.length;
+    document.getElementById('lightboxImg').src = galleryImages[currentImg];
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (!document.getElementById('lightbox').classList.contains('show')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') navLightbox(-1);
+    if (e.key === 'ArrowRight') navLightbox(1);
+  });
 
   function closeMenu() {
     document.querySelector('.hamburger').classList.remove('active');
