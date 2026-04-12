@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Comarian's Place — A private villa resort in Magalang, Pampanga. Book your stay with pool, 3 bedrooms, and full amenities for up to 20 guests."/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>"/>
   <title>Comarian's Place — Book Your Stay</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <style>
@@ -59,6 +61,29 @@
       transition: color 0.2s;
     }
     .nav-links a:hover { color: var(--earth); }
+    .hamburger {
+      display: none; background: none; border: none; cursor: pointer;
+      flex-direction: column; gap: 5px; padding: 4px;
+    }
+    .hamburger span {
+      display: block; width: 24px; height: 2px; background: var(--earth-dark);
+      transition: all 0.3s;
+    }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+    @media (max-width: 900px) {
+      .hamburger { display: flex; }
+      .nav-links {
+        display: none; position: absolute; top: 100%; left: 0; right: 0;
+        flex-direction: column; gap: 0; background: rgba(253,250,245,0.98);
+        backdrop-filter: blur(12px); padding: 16px 24px;
+        border-bottom: 1px solid rgba(139,111,71,0.1);
+      }
+      .nav-links.open { display: flex; }
+      .nav-links li { padding: 12px 0; border-bottom: 1px solid var(--sand-dark); }
+      .nav-links li:last-child { border-bottom: none; }
+    }
     .nav-book {
       background: var(--green);
       color: var(--white) !important;
@@ -490,14 +515,17 @@
 <!-- NAV -->
 <nav>
   <div class="nav-logo">Comarian's <span>Place</span></div>
+  <button class="hamburger" onclick="this.classList.toggle('active');document.querySelector('.nav-links').classList.toggle('open');" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
   <ul class="nav-links">
-    <li><a href="#about">About</a></li>
-    <li><a href="#amenities">Amenities</a></li>
-    <li><a href="#video-tour">Videos</a></li>
-    <li><a href="#pricing">Pricing</a></li>
-    <li><a href="#rooms">Rooms</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#booking" class="nav-book">Book Now</a></li>
+    <li><a href="#about" onclick="closeMenu()">About</a></li>
+    <li><a href="#amenities" onclick="closeMenu()">Amenities</a></li>
+    <li><a href="#video-tour" onclick="closeMenu()">Videos</a></li>
+    <li><a href="#pricing" onclick="closeMenu()">Pricing</a></li>
+    <li><a href="#rooms" onclick="closeMenu()">Rooms</a></li>
+    <li><a href="#contact" onclick="closeMenu()">Contact</a></li>
+    <li><a href="#booking" class="nav-book" onclick="closeMenu()">Book Now</a></li>
   </ul>
 </nav>
 
@@ -516,7 +544,7 @@
 <section id="about">
   <div class="about-grid">
     <div class="about-img" style="background:none;padding:0;">
-      <img src="villa.jpeg" alt="Comarian's Place Villa" style="width:100%;height:100%;object-fit:cover;border-radius:4px;"/>
+      <img src="https://raw.githubusercontent.com/alexronniemcruzjr-sudo/comariansplace/main/villa.jpeg" alt="Comarian's Place Villa" style="width:100%;height:100%;object-fit:cover;border-radius:4px;"/>
     </div>
     <div>
       <span class="section-label">About Us</span>
@@ -578,7 +606,7 @@
     <p class="section-sub">A complete private villa experience — perfect for families, barkadas, and special occasions.</p>
     <div style="margin-top:32px;background:var(--white);border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.1);display:flex;flex-wrap:wrap;">
       <div style="flex:1;min-width:280px;min-height:320px;position:relative;overflow:hidden;">
-        <img src="villa.jpeg" alt="Comarian's Place Villa" style="width:100%;height:100%;object-fit:cover;"/>
+        <img src="https://raw.githubusercontent.com/alexronniemcruzjr-sudo/comariansplace/main/villa.jpeg" alt="Comarian's Place Villa" style="width:100%;height:100%;object-fit:cover;"/>
         <div style="position:absolute;top:16px;right:16px;background:var(--accent);color:var(--earth-dark);font-size:0.72rem;font-weight:700;padding:6px 14px;border-radius:20px;letter-spacing:0.5px;">Private Villa</div>
       </div>
       <div style="flex:2;min-width:280px;padding:36px 40px;">
@@ -622,24 +650,30 @@
     <h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:400;color:#fdfaf5;margin-bottom:12px;line-height:1.2;">See It For Yourself</h2>
     <p style="color:rgba(255,255,255,0.6);font-size:0.95rem;line-height:1.8;max-width:500px;margin-bottom:40px;">Take a virtual walkthrough of Comarian's Place — from the pool to the bedrooms, every corner of your home away from home.</p>
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;">
-      <div style="border-radius:12px;overflow:hidden;position:relative;background:#1a1a1a;aspect-ratio:16/9;">
-        <video controls style="width:100%;height:100%;object-fit:cover;display:block;">
-          <source src="CP1.mp4" type="video/mp4"/>
-        </video>
-        <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:16px 14px 10px;color:#fff;font-size:0.8rem;font-weight:500;pointer-events:none;">🏡 Full Villa Tour</div>
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;color:#c8a96e;margin-bottom:8px;">🏡 Full Villa Tour</div>
+        <div style="border-radius:12px;overflow:hidden;background:#1a1a1a;aspect-ratio:16/9;">
+          <video controls style="width:100%;height:100%;object-fit:cover;display:block;">
+            <source src="https://raw.githubusercontent.com/alexronniemcruzjr-sudo/comariansplace/main/CP1.mp4" type="video/mp4"/>
+          </video>
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:20px;">
-        <div style="border-radius:10px;overflow:hidden;position:relative;background:#1a1a1a;aspect-ratio:16/9;">
-          <video controls style="width:100%;height:100%;object-fit:cover;display:block;">
-            <source src="CP2.mp4" type="video/mp4"/>
-          </video>
-          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:12px 14px 8px;color:#fff;font-size:0.75rem;font-weight:500;pointer-events:none;">🏊 Pool & Outdoor Area</div>
+        <div>
+          <div style="font-size:0.82rem;font-weight:600;color:#c8a96e;margin-bottom:8px;">🏊 Pool & Outdoor Area</div>
+          <div style="border-radius:10px;overflow:hidden;background:#1a1a1a;aspect-ratio:16/9;">
+            <video controls style="width:100%;height:100%;object-fit:cover;display:block;">
+              <source src="https://raw.githubusercontent.com/alexronniemcruzjr-sudo/comariansplace/main/CP2.mp4" type="video/mp4"/>
+            </video>
+          </div>
         </div>
-        <div style="border-radius:10px;overflow:hidden;position:relative;background:#1a1a1a;aspect-ratio:16/9;">
-          <video controls style="width:100%;height:100%;object-fit:cover;display:block;">
-            <source src="CP3.mp4" type="video/mp4"/>
-          </video>
-          <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:12px 14px 8px;color:#fff;font-size:0.75rem;font-weight:500;pointer-events:none;">🛏️ Rooms & Interiors</div>
+        <div>
+          <div style="font-size:0.82rem;font-weight:600;color:#c8a96e;margin-bottom:8px;">🛏️ Rooms & Interiors</div>
+          <div style="border-radius:10px;overflow:hidden;background:#1a1a1a;aspect-ratio:16/9;">
+            <video controls style="width:100%;height:100%;object-fit:cover;display:block;">
+              <source src="https://raw.githubusercontent.com/alexronniemcruzjr-sudo/comariansplace/main/CP3.mp4" type="video/mp4"/>
+            </video>
+          </div>
         </div>
       </div>
     </div>
@@ -708,7 +742,21 @@
 
     <div class="booking-card">
       <h3>Check Availability</h3>
-      <div class="booking-grid">
+      <div class="booking-grid" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="guestName" placeholder="Juan Dela Cruz" required/>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="guestEmail" placeholder="you@email.com" required/>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="guestPhone" placeholder="0917-XXX-XXXX"/>
+        </div>
+      </div>
+      <div class="booking-grid" style="margin-top:16px;">
         <div class="form-group">
           <label>Check-in Date</label>
           <input type="date" id="checkIn" placeholder="Check-in"/>
@@ -731,16 +779,41 @@
             <option value="Villa - Saturday (Off-Peak)|13500">Off-Peak: Saturday — ₱13,500</option>
           </select>
         </div>
-        <button class="book-btn" onclick="submitBooking()">Reserve Now</button>
-      </div>
-      <div class="booking-summary" id="bookingSummary">
-        <div class="summary-item">
-          <span class="summary-label">Check-out</span>
-          <span class="summary-value" id="sumCheckOut">—</span>
+        <div class="form-group">
+          <label>Number of Guests</label>
+          <select id="guestCount">
+            <option value="1">1 Guest</option>
+            <option value="2">2 Guests</option>
+            <option value="3">3 Guests</option>
+            <option value="4">4 Guests</option>
+            <option value="5">5 Guests</option>
+            <option value="6">6 Guests</option>
+            <option value="7">7 Guests</option>
+            <option value="8">8 Guests</option>
+            <option value="9">9 Guests</option>
+            <option value="10" selected>10 Guests</option>
+            <option value="11">11 Guests</option>
+            <option value="12">12 Guests</option>
+            <option value="13">13 Guests</option>
+            <option value="14">14 Guests</option>
+            <option value="15">15 Guests</option>
+            <option value="16">16 Guests</option>
+            <option value="17">17 Guests</option>
+            <option value="18">18 Guests</option>
+            <option value="19">19 Guests</option>
+            <option value="20">20 Guests</option>
+          </select>
         </div>
+      </div>
+      <div style="margin-top:16px;"><button class="book-btn" onclick="submitBooking()" id="bookBtn" style="width:100%;">Reserve Now</button></div>
+      <div class="booking-summary" id="bookingSummary">
         <div class="summary-item">
           <span class="summary-label">Check-in</span>
           <span class="summary-value" id="sumCheckIn">—</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Check-out</span>
+          <span class="summary-value" id="sumCheckOut">—</span>
         </div>
         <div class="summary-item">
           <span class="summary-label">Nights</span>
@@ -784,8 +857,8 @@
           <div class="contact-icon">✉️</div>
           <div>
             <h4>Email</h4>
-            <p><a href="/cdn-cgi/l/email-protection#86e5e9ebe7f4efe7e8f5f6eae7e5e3c6e1ebe7efeaa8e5e9eb"><span class="__cf_email__" data-cfemail="6605090b07140f070815160a07050326010b070f0a4805090b">[email&#160;protected]</span></a><br/>
-            <a href="/cdn-cgi/l/email-protection#b6d5d9dbd7c4dfd7d8c598c6dad7d5d398d7c6c6f6d1dbd7dfda98d5d9db"><span class="__cf_email__" data-cfemail="10737f7d716279717e633e607c7173753e71606050777d71797c3e737f7d">[email&#160;protected]</span></a></p>
+            <p><a href="mailto:comariansplace@gmail.com">comariansplace@gmail.com</a><br/>
+            <a href="mailto:comariansplace.mgmt@gmail.com">comariansplace.mgmt@gmail.com</a></p>
           </div>
         </div>
         <div class="contact-item">
@@ -809,10 +882,22 @@
   </div>
 </section>
 
+<!-- MAP -->
+<div id="map" style="background:var(--sand);padding:80px 48px;">
+  <div style="max-width:1200px;margin:0 auto;">
+    <span class="section-label">Find Us</span>
+    <h2 class="section-title">Location</h2>
+    <p class="section-sub" style="margin-bottom:32px;">Sitio Cubul, San Nicholas II, Magalang, Pampanga, Philippines</p>
+    <div style="border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3849.5!2d120.66!3d15.22!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMTXCsDEzJzEyLjAiTiAxMjDCsDM5JzM2LjAiRQ!5e0!3m2!1sen!2sph!4v1700000000000" width="100%" height="400" style="border:0;display:block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-logo">Comarian's Place</div>
-  <p>© 2025 Comarian's Place. All rights reserved.</p>
+  <p>© 2026 Comarian's Place. All rights reserved.</p>
   <p style="margin-top:6px;"><a href="https://www.facebook.com/comariansplace/" target="_blank">Facebook</a></p>
 </footer>
 
@@ -825,7 +910,7 @@
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
   // Today's date in YYYY-MM-DD
   function toDateStr(d) {
     return d.toISOString().split('T')[0];
@@ -916,25 +1001,92 @@
 
   document.getElementById('roomType').addEventListener('change', updateSummary);
 
-  function submitBooking() {
+  async function submitBooking() {
     const ciVal = checkInEl.value;
     const coVal = checkOutEl.value;
     const roomVal = document.getElementById('roomType').value;
+    const guestName = document.getElementById('guestName').value.trim();
+    const guestEmail = document.getElementById('guestEmail').value.trim();
+    const guestPhone = document.getElementById('guestPhone').value.trim();
+    const guestCount = parseInt(document.getElementById('guestCount').value);
     let valid = true;
 
+    if (!guestName) { alert('Please enter your name.'); valid = false; }
+    if (!guestEmail) { alert('Please enter your email.'); valid = false; }
     if (!ciVal) { ciError.style.display = 'block'; valid = false; }
     if (!coVal) { coError.style.display = 'block'; valid = false; }
     if (!roomVal) { alert('Please select a room type.'); valid = false; }
 
     if (!valid) return;
 
-    document.getElementById('modalTitle').textContent = '🎉 Reservation Received!';
-    document.getElementById('modalMsg').textContent =
-      'Thank you! Your reservation for ' + formatDate(ciVal) + ' to ' + formatDate(coVal) +
-      ' has been received. We will contact you via Facebook Messenger to confirm your booking.';
-    document.getElementById('modalOverlay').classList.add('show');
+    const [roomName, priceStr] = roomVal.split('|');
+    const nights = Math.round((new Date(coVal + 'T00:00:00') - new Date(ciVal + 'T00:00:00')) / 86400000);
+    const totalPrice = parseInt(priceStr) * nights;
+
+    const btn = document.getElementById('bookBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guest_name: guestName,
+          email: guestEmail,
+          phone: guestPhone,
+          check_in: ciVal,
+          check_out: coVal,
+          guests: guestCount,
+          room_type: roomName,
+          total_price: totalPrice,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to submit');
+
+      document.getElementById('modalTitle').textContent = '🎉 Reservation Received!';
+      document.getElementById('modalMsg').textContent =
+        'Thank you, ' + guestName + '! Your reservation for ' + formatDate(ciVal) + ' to ' + formatDate(coVal) +
+        ' (₱' + totalPrice.toLocaleString() + ') has been received. We will contact you via Facebook Messenger or email to confirm your booking and provide payment details.';
+      document.getElementById('modalOverlay').classList.add('show');
+
+      // Reset form
+      document.getElementById('guestName').value = '';
+      document.getElementById('guestEmail').value = '';
+      document.getElementById('guestPhone').value = '';
+      checkInEl.value = '';
+      checkOutEl.value = '';
+      checkOutEl.disabled = true;
+      document.getElementById('roomType').value = '';
+      document.getElementById('guestCount').value = '10';
+      hideSummary();
+    } catch (err) {
+      document.getElementById('modalTitle').textContent = '⚠️ Submission Error';
+      document.getElementById('modalMsg').textContent =
+        'Sorry, there was a problem submitting your reservation. Please try again or contact us directly at 0916-479-3432.';
+      document.getElementById('modalOverlay').classList.add('show');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Reserve Now';
   }
 
   function sendMessage() {
     document.getElementById('modalTitle').textContent = '✉️ Message Sent!';
-    document.getElementById('modalMsg').textConten
+    document.getElementById('modalMsg').textContent =
+      'Thank you for reaching out! We will get back to you as soon as possible.';
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+
+  function closeMenu() {
+    document.querySelector('.hamburger').classList.remove('active');
+    document.querySelector('.nav-links').classList.remove('open');
+  }
+</script>
+</body>
+</html>

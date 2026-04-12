@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — Comarian's Place</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --sand: #f5f0e8; --sand-dark: #e8e0d0; --earth: #8b6f47; --earth-dark: #5c4730;
+      --green: #3d5a3e; --green-light: #5a7d5b; --white: #fdfaf5; --text: #2a2018;
+      --text-light: #6b5a45; --accent: #c8a96e; --red: #dc2626;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--sand); color: var(--text); }
+
+    /* TOP BAR */
+    .topbar {
+      background: var(--earth-dark); padding: 16px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-logo {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.3rem;
+      font-weight: 600; color: var(--white);
+    }
+    .topbar-logo span { color: var(--accent); font-style: italic; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .topbar-user { font-size: 0.82rem; color: rgba(255,255,255,0.7); }
+    .topbar-btn {
+      background: rgba(255,255,255,0.1); color: var(--white); border: none;
+      padding: 8px 16px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;
+      text-decoration: none; font-family: 'DM Sans', sans-serif;
+    }
+    .topbar-btn:hover { background: rgba(255,255,255,0.2); }
+    .topbar-btn.logout { background: rgba(220,38,38,0.2); }
+    .topbar-btn.logout:hover { background: rgba(220,38,38,0.4); }
+
+    /* STATS */
+    .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; padding: 24px 32px 0; max-width: 1400px; margin: 0 auto; }
+    .stat-card {
+      background: var(--white); border-radius: 12px; padding: 20px 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); margin-bottom: 8px; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--earth-dark); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.accent { color: var(--accent); }
+    .stat-value.red { color: var(--red); }
+
+    /* FILTERS */
+    .filters {
+      display: flex; gap: 12px; padding: 24px 32px 0; max-width: 1400px; margin: 0 auto;
+      flex-wrap: wrap; align-items: center;
+    }
+    .filter-btn {
+      padding: 8px 18px; border-radius: 20px; border: 1.5px solid var(--sand-dark);
+      background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+      cursor: pointer; color: var(--text-light); transition: all 0.2s;
+    }
+    .filter-btn.active { background: var(--green); color: var(--white); border-color: var(--green); }
+    .filter-btn:hover { border-color: var(--green); }
+    .search-input {
+      margin-left: auto; padding: 8px 16px; border: 1.5px solid var(--sand-dark);
+      border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+      outline: none; min-width: 220px; background: var(--white);
+    }
+    .search-input:focus { border-color: var(--green); }
+
+    /* BOOKINGS */
+    .bookings { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+    .booking-card {
+      background: var(--white); border-radius: 12px; padding: 24px;
+      margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 20px; align-items: center;
+      transition: box-shadow 0.2s;
+    }
+    .booking-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .bc-guest h3 { font-size: 1rem; font-weight: 600; color: var(--earth-dark); margin-bottom: 4px; }
+    .bc-guest p { font-size: 0.78rem; color: var(--text-light); line-height: 1.5; }
+    .bc-dates { font-size: 0.85rem; }
+    .bc-dates .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); margin-bottom: 2px; }
+    .bc-dates .value { font-weight: 500; color: var(--earth-dark); }
+    .bc-dates .date-row { margin-bottom: 8px; }
+    .bc-status { text-align: center; }
+    .badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .badge.pending { background: #fef3c7; color: #92400e; }
+    .badge.partial { background: #dbeafe; color: #1e40af; }
+    .badge.paid { background: #d1fae5; color: #065f46; }
+    .bc-status .guest-count { font-size: 0.78rem; color: var(--text-light); margin-top: 6px; }
+    .bc-status .total { font-size: 1.1rem; font-weight: 700; color: var(--green); margin-top: 4px; }
+    .bc-actions { display: flex; flex-direction: column; gap: 6px; }
+    .action-btn {
+      padding: 6px 14px; border-radius: 6px; border: none; font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .action-btn.mark-paid { background: var(--green); color: var(--white); }
+    .action-btn.mark-paid:hover { background: var(--green-light); }
+    .action-btn.mark-partial { background: #dbeafe; color: #1e40af; }
+    .action-btn.mark-partial:hover { background: #bfdbfe; }
+    .action-btn.view-proof { background: var(--sand); color: var(--text); }
+    .action-btn.view-proof:hover { background: var(--sand-dark); }
+    .action-btn.delete { background: #fef2f2; color: var(--red); }
+    .action-btn.delete:hover { background: #fecaca; }
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: var(--text-light);
+    }
+    .empty-state h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--earth-dark); margin-bottom: 8px; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--white); border-radius: 12px; padding: 32px;
+      max-width: 500px; width: 90%; transform: scale(0.9); transition: transform 0.3s;
+    }
+    .modal-overlay.show .modal { transform: scale(1); }
+    .modal h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--earth-dark); margin-bottom: 16px; }
+    .modal p { font-size: 0.85rem; color: var(--text-light); line-height: 1.6; margin-bottom: 8px; }
+    .modal-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+    .modal-btn {
+      padding: 10px 24px; border-radius: 6px; border: none; font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem; cursor: pointer;
+    }
+    .modal-btn.cancel { background: var(--sand); color: var(--text); }
+    .modal-btn.confirm { background: var(--red); color: var(--white); }
+    .modal-btn.confirm:hover { background: #b91c1c; }
+    .proof-img { max-width: 100%; border-radius: 8px; margin-top: 12px; }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .stats { grid-template-columns: repeat(2,1fr); }
+      .booking-card { grid-template-columns: 1fr; }
+      .filters { flex-direction: column; align-items: stretch; }
+      .search-input { margin-left: 0; }
+    }
+    @media (max-width: 600px) {
+      .stats { grid-template-columns: 1fr; }
+      .topbar { padding: 12px 16px; }
+      .bookings, .filters { padding-left: 16px; padding-right: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">Comarian's <span>Place</span> — Admin</div>
+  <div class="topbar-right">
+    <span class="topbar-user" id="userEmail"></span>
+    <a href="/" class="topbar-btn">View Site</a>
+    <button class="topbar-btn logout" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-label">Total Bookings</div>
+    <div class="stat-value" id="statTotal">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Upcoming</div>
+    <div class="stat-value green" id="statUpcoming">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Fully Paid</div>
+    <div class="stat-value accent" id="statPaid">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pending Payment</div>
+    <div class="stat-value red" id="statPending">0</div>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn" onclick="setFilter('upcoming',this)">Upcoming</button>
+  <button class="filter-btn" onclick="setFilter('pending',this)">Pending</button>
+  <button class="filter-btn" onclick="setFilter('partial',this)">Partial</button>
+  <button class="filter-btn" onclick="setFilter('paid',this)">Paid</button>
+  <input type="text" class="search-input" placeholder="Search guest name..." oninput="searchBookings(this.value)"/>
+</div>
+
+<!-- BOOKINGS LIST -->
+<div class="bookings" id="bookingsList"></div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <h3>Delete Booking</h3>
+    <p>Are you sure you want to delete this reservation? This cannot be undone.</p>
+    <p id="deleteInfo" style="font-weight:500;color:var(--earth-dark);"></p>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="modal-btn confirm" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROOF MODAL -->
+<div class="modal-overlay" id="proofModal">
+  <div class="modal">
+    <h3>Payment Proof</h3>
+    <div id="proofContent"></div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="document.getElementById('proofModal').classList.remove('show')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="uploadModal">
+  <div class="modal">
+    <h3>Upload Payment Proof</h3>
+    <p>Select a screenshot of the payment for this booking.</p>
+    <input type="file" id="proofFile" accept="image/*" style="margin-top:12px;font-size:0.85rem;"/>
+    <div id="uploadPreview" style="margin-top:12px;"></div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeUploadModal()">Cancel</button>
+      <button class="modal-btn confirm" id="uploadBtn" onclick="confirmUpload()" style="background:var(--green);">Upload</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="hiddenFileInput" accept="image/*" style="display:none;"/>
+
+<script>
+  const TOKEN = localStorage.getItem('cp_token');
+  if (!TOKEN) window.location.href = '/login.html';
+
+  const userInfo = JSON.parse(localStorage.getItem('cp_user') || '{}');
+  document.getElementById('userEmail').textContent = userInfo.email || 'Admin';
+
+  let allBookings = [];
+  let currentFilter = 'all';
+  let searchQuery = '';
+  let deleteId = null;
+
+  async function apiFetch(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + TOKEN,
+        ...options.headers,
+      },
+    });
+    if (res.status === 401) {
+      localStorage.removeItem('cp_token');
+      localStorage.removeItem('cp_user');
+      window.location.href = '/login.html';
+      return;
+    }
+    return res.json();
+  }
+
+  async function loadBookings() {
+    allBookings = await apiFetch('/api/bookings') || [];
+    updateStats();
+    renderBookings();
+  }
+
+  function updateStats() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('statTotal').textContent = allBookings.length;
+    document.getElementById('statUpcoming').textContent = allBookings.filter(b => b.check_in >= today).length;
+    document.getElementById('statPaid').textContent = allBookings.filter(b => b.payment_status === 'paid').length;
+    document.getElementById('statPending').textContent = allBookings.filter(b => b.payment_status === 'pending').length;
+  }
+
+  function getFiltered() {
+    const today = new Date().toISOString().split('T')[0];
+    let filtered = allBookings;
+    if (currentFilter === 'upcoming') filtered = filtered.filter(b => b.check_in >= today);
+    else if (currentFilter !== 'all') filtered = filtered.filter(b => b.payment_status === currentFilter);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(b => b.guest_name.toLowerCase().includes(q) || b.email.toLowerCase().includes(q));
+    }
+    return filtered;
+  }
+
+  function renderBookings() {
+    const list = document.getElementById('bookingsList');
+    const filtered = getFiltered();
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="empty-state"><h3>No bookings found</h3><p>No reservations match the current filter.</p></div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(b => {
+      const ciDate = formatDate(b.check_in);
+      const coDate = formatDate(b.check_out);
+      const nights = Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000);
+      return `
+        <div class="booking-card">
+          <div class="bc-guest">
+            <h3>${esc(b.guest_name)}</h3>
+            <p>${esc(b.email)}</p>
+            ${b.phone ? '<p>' + esc(b.phone) + '</p>' : ''}
+          </div>
+          <div class="bc-dates">
+            <div class="date-row"><div class="label">Check-in</div><div class="value">${ciDate}</div></div>
+            <div class="date-row"><div class="label">Check-out</div><div class="value">${coDate}</div></div>
+            <div style="font-size:0.75rem;color:var(--text-light);">${nights} night${nights !== 1 ? 's' : ''} · ${esc(b.room_type)}</div>
+          </div>
+          <div class="bc-status">
+            <span class="badge ${b.payment_status}">${b.payment_status}</span>
+            <div class="guest-count">${b.guests} guest${b.guests !== 1 ? 's' : ''}</div>
+            <div class="total">₱${Number(b.total_price).toLocaleString()}</div>
+          </div>
+          <div class="bc-actions">
+            ${b.payment_status !== 'paid' ? `<button class="action-btn mark-paid" onclick="updateStatus('${b.id}','paid')">Mark Paid</button>` : ''}
+            ${b.payment_status === 'pending' ? `<button class="action-btn mark-partial" onclick="updateStatus('${b.id}','partial')">Mark Partial</button>` : ''}
+            <button class="action-btn view-proof" onclick="showUploadModal('${b.id}')">Upload Proof</button>
+            ${b.payment_proof_url ? `<button class="action-btn view-proof" onclick="viewProof('${esc(b.payment_proof_url)}')">View Proof</button>` : ''}
+            <button class="action-btn delete" onclick="showDeleteModal('${b.id}','${esc(b.guest_name)}')">Delete</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function formatDate(str) {
+    return new Date(str + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderBookings();
+  }
+
+  function searchBookings(q) {
+    searchQuery = q;
+    renderBookings();
+  }
+
+  async function updateStatus(id, status) {
+    await apiFetch('/api/bookings', {
+      method: 'PATCH',
+      body: JSON.stringify({ id, payment_status: status }),
+    });
+    loadBookings();
+  }
+
+  function showDeleteModal(id, name) {
+    deleteId = id;
+    document.getElementById('deleteInfo').textContent = name;
+    document.getElementById('deleteModal').classList.add('show');
+  }
+
+  function closeDeleteModal() {
+    deleteId = null;
+    document.getElementById('deleteModal').classList.remove('show');
+  }
+
+  async function confirmDelete() {
+    if (!deleteId) return;
+    await apiFetch('/api/bookings?id=' + deleteId, { method: 'DELETE' });
+    closeDeleteModal();
+    loadBookings();
+  }
+
+  function viewProof(url) {
+    document.getElementById('proofContent').innerHTML = `<img src="${url}" class="proof-img" alt="Payment proof"/>`;
+    document.getElementById('proofModal').classList.add('show');
+  }
+
+  function logout() {
+    localStorage.removeItem('cp_token');
+    localStorage.removeItem('cp_user');
+    window.location.href = '/login.html';
+  }
+
+  // Upload proof
+  let uploadBookingId = null;
+
+  function showUploadModal(id) {
+    uploadBookingId = id;
+    document.getElementById('proofFile').value = '';
+    document.getElementById('uploadPreview').innerHTML = '';
+    document.getElementById('uploadModal').classList.add('show');
+  }
+
+  function closeUploadModal() {
+    uploadBookingId = null;
+    document.getElementById('uploadModal').classList.remove('show');
+  }
+
+  document.getElementById('proofFile').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('uploadPreview').innerHTML =
+        '<img src="' + e.target.result + '" style="max-width:100%;border-radius:8px;margin-top:8px;max-height:300px;"/>';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  async function confirmUpload() {
+    const file = document.getElementById('proofFile').files[0];
+    if (!file || !uploadBookingId) return alert('Please select an image.');
+
+    const btn = document.getElementById('uploadBtn');
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        const res = await apiFetch('/api/upload-proof', {
+          method: 'POST',
+          body: JSON.stringify({
+            booking_id: uploadBookingId,
+            image_data: e.target.result,
+            file_name: file.name,
+          }),
+        });
+
+        if (res && res.url) {
+          closeUploadModal();
+          loadBookings();
+        } else {
+          alert('Upload failed. Please try again.');
+        }
+      } catch (err) {
+        alert('Upload failed: ' + err.message);
+      }
+      btn.disabled = false;
+      btn.textContent = 'Upload';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Load on page ready
+  loadBookings();
+</script>
+</body>
+</html>
