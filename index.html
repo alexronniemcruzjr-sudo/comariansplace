@@ -1224,10 +1224,15 @@
 
       if (!res.ok) throw new Error('Failed to submit');
 
+      const dpAmount = Math.round(totalPrice * 0.5);
+      const payUrl = '/pay.html?name=' + encodeURIComponent(guestName) + '&email=' + encodeURIComponent(guestEmail) + '&phone=' + encodeURIComponent(guestPhone) + '&amount=' + dpAmount;
+
       document.getElementById('modalTitle').textContent = '🎉 Reservation Received!';
-      document.getElementById('modalMsg').textContent =
+      document.getElementById('modalMsg').innerHTML =
         'Thank you, ' + guestName + '! Your reservation for ' + formatDate(ciVal) + ' to ' + formatDate(coVal) +
-        ' (₱' + totalPrice.toLocaleString() + ') has been received. We will contact you via Facebook Messenger or email to confirm your booking and provide payment details.';
+        ' (<strong>₱' + totalPrice.toLocaleString() + '</strong>) has been received.<br/><br/>' +
+        'To secure your booking, please pay the <strong>50% downpayment (₱' + dpAmount.toLocaleString() + ')</strong>.' +
+        '<br/><br/><a href="' + payUrl + '" style="display:inline-block;background:#3d5a3e;color:#fdfaf5;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:500;font-size:0.9rem;">Pay Now</a>';
       document.getElementById('modalOverlay').classList.add('show');
 
       // Reset form

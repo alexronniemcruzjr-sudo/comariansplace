@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment — Comarian's Place</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --sand: #f5f0e8; --sand-dark: #e8e0d0; --earth: #8b6f47; --earth-dark: #5c4730;
+      --green: #3d5a3e; --green-light: #5a7d5b; --white: #fdfaf5; --text: #2a2018;
+      --text-light: #6b5a45; --accent: #c8a96e;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--sand); color: var(--text); min-height: 100vh; }
+
+    .topbar {
+      background: var(--earth-dark); padding: 16px 24px; text-align: center;
+    }
+    .topbar-logo {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.3rem;
+      font-weight: 600; color: var(--white); text-decoration: none;
+    }
+    .topbar-logo span { color: var(--accent); font-style: italic; }
+
+    .container { max-width: 560px; margin: 0 auto; padding: 32px 20px; }
+
+    /* Steps */
+    .steps {
+      display: flex; gap: 0; margin-bottom: 32px; position: relative;
+    }
+    .step {
+      flex: 1; text-align: center; position: relative; z-index: 1;
+    }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 0.82rem; font-weight: 600; margin: 0 auto 6px;
+      background: var(--sand-dark); color: var(--text-light); transition: all 0.3s;
+    }
+    .step.active .step-num { background: var(--green); color: var(--white); }
+    .step.done .step-num { background: var(--accent); color: var(--earth-dark); }
+    .step-label { font-size: 0.7rem; color: var(--text-light); letter-spacing: 0.5px; }
+    .step.active .step-label { color: var(--green); font-weight: 600; }
+    .steps::before {
+      content: ''; position: absolute; top: 18px; left: 15%; right: 15%;
+      height: 2px; background: var(--sand-dark); z-index: 0;
+    }
+
+    /* Card */
+    .card {
+      background: var(--white); border-radius: 16px; padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.5rem;
+      font-weight: 600; color: var(--earth-dark); margin-bottom: 8px;
+    }
+    .card p { font-size: 0.85rem; color: var(--text-light); line-height: 1.6; margin-bottom: 20px; }
+
+    /* QR */
+    .qr-wrapper {
+      background: white; border-radius: 12px; padding: 20px; text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px;
+    }
+    .qr-wrapper img { max-width: 280px; width: 100%; border-radius: 8px; }
+    .qr-info {
+      background: var(--sand); border-radius: 10px; padding: 16px;
+      margin-bottom: 20px; font-size: 0.82rem; line-height: 1.7;
+    }
+    .qr-info strong { color: var(--earth-dark); }
+
+    /* Form */
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .form-group label {
+      font-size: 0.72rem; font-weight: 500; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text-light);
+    }
+    .form-group input, .form-group select {
+      padding: 12px 14px; border: 1.5px solid var(--sand-dark); border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--text);
+      background: var(--white); outline: none; transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--green); box-shadow: 0 0 0 3px rgba(61,90,62,0.1);
+    }
+
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; margin-top: 8px;
+    }
+    .btn-green { background: var(--green); color: var(--white); }
+    .btn-green:hover { background: var(--green-light); }
+    .btn-accent { background: var(--accent); color: var(--earth-dark); }
+    .btn-accent:hover { background: #d4b87a; }
+    .btn-messenger { background: #0084FF; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+    .btn-messenger:hover { background: #0073e6; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .upload-area {
+      border: 2px dashed var(--sand-dark); border-radius: 12px; padding: 24px;
+      text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 16px;
+    }
+    .upload-area:hover { border-color: var(--green); background: rgba(61,90,62,0.03); }
+    .upload-area.has-file { border-color: var(--green); border-style: solid; }
+    .upload-area p { margin: 0; font-size: 0.82rem; color: var(--text-light); }
+    .upload-preview { max-width: 100%; max-height: 200px; border-radius: 8px; margin-top: 12px; }
+
+    /* Success */
+    .success-icon { font-size: 3rem; margin-bottom: 12px; }
+    .amount-display {
+      font-size: 2rem; font-weight: 700; color: var(--green); margin: 12px 0;
+    }
+    .detail-row {
+      display: flex; justify-content: space-between; padding: 10px 0;
+      border-bottom: 1px solid var(--sand); font-size: 0.85rem;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: var(--text-light); }
+    .detail-value { font-weight: 500; color: var(--earth-dark); }
+
+    .hidden { display: none; }
+    .back-link {
+      display: block; text-align: center; margin-top: 20px;
+      color: var(--text-light); font-size: 0.82rem; text-decoration: none;
+    }
+    .back-link:hover { color: var(--earth); }
+
+    @media (max-width: 600px) {
+      .container { padding: 20px 16px; }
+      .card { padding: 24px 20px; }
+      .qr-wrapper img { max-width: 220px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/" class="topbar-logo">Comarian's <span>Place</span></a>
+</div>
+
+<div class="container">
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="step1ind"><div class="step-num">1</div><div class="step-label">Your Info</div></div>
+    <div class="step" id="step2ind"><div class="step-num">2</div><div class="step-label">Pay</div></div>
+    <div class="step" id="step3ind"><div class="step-num">3</div><div class="step-label">Upload Proof</div></div>
+    <div class="step" id="step4ind"><div class="step-num">4</div><div class="step-label">Done</div></div>
+  </div>
+
+  <!-- Step 1: Info -->
+  <div class="card" id="step1">
+    <h2>Payment Details</h2>
+    <p>Enter your booking details to proceed with payment.</p>
+    <div class="form-group">
+      <label>Full Name (as used in booking)</label>
+      <input type="text" id="payName" placeholder="Juan Dela Cruz" required/>
+    </div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="payEmail" placeholder="you@email.com" required/>
+    </div>
+    <div class="form-group">
+      <label>Phone Number</label>
+      <input type="tel" id="payPhone" placeholder="0917-XXX-XXXX"/>
+    </div>
+    <div class="form-group">
+      <label>Amount to Pay</label>
+      <div style="display:flex;gap:8px;">
+        <select id="payType" style="flex:1;" onchange="updateAmount()">
+          <option value="dp">Downpayment (50%)</option>
+          <option value="balance">Remaining Balance</option>
+          <option value="security">Security Deposit (P3,000)</option>
+          <option value="full">Full Payment</option>
+          <option value="custom">Custom Amount</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Amount (PHP)</label>
+      <input type="number" id="payAmount" placeholder="Enter amount" required/>
+    </div>
+    <button class="btn btn-green" onclick="goToStep2()">Proceed to Payment</button>
+  </div>
+
+  <!-- Step 2: QR Code -->
+  <div class="card hidden" id="step2">
+    <h2>Scan & Pay</h2>
+    <p>Scan the QR code below using your banking app or GCash to send payment via InstaPay.</p>
+    <div class="qr-wrapper">
+      <img src="qr-code.jpeg" alt="Metrobank InstaPay QR Code"/>
+    </div>
+    <div class="qr-info">
+      <strong>Account:</strong> Comarian — Metrobank<br/>
+      <strong>Account ending:</strong> 6401<br/>
+      <strong>Amount to send:</strong> <span id="qrAmount" style="color:var(--green);font-weight:700;"></span><br/>
+      <strong>Reference:</strong> <span id="qrRef"></span>
+    </div>
+    <p style="font-size:0.78rem;color:var(--text-light);">After paying, click the button below to upload your proof of payment.</p>
+    <button class="btn btn-green" onclick="goToStep3()">I've Paid — Upload Proof</button>
+    <button class="btn btn-accent" onclick="goToStep1()" style="margin-top:8px;">Back</button>
+  </div>
+
+  <!-- Step 3: Upload Proof -->
+  <div class="card hidden" id="step3">
+    <h2>Upload Payment Proof</h2>
+    <p>Take a screenshot of your payment confirmation and upload it below.</p>
+    <div class="upload-area" id="uploadArea" onclick="document.getElementById('proofInput').click()">
+      <p>📸 Tap to select screenshot</p>
+      <p style="font-size:0.72rem;margin-top:4px;">JPG, PNG, or screenshot from your banking app</p>
+      <img class="upload-preview hidden" id="uploadPreview"/>
+    </div>
+    <input type="file" id="proofInput" accept="image/*" style="display:none;" onchange="previewFile(this)"/>
+    <div class="form-group">
+      <label>Reference Number (optional)</label>
+      <input type="text" id="refNumber" placeholder="From your banking app"/>
+    </div>
+    <button class="btn btn-green" id="submitBtn" onclick="submitPayment()">Submit Payment Proof</button>
+    <button class="btn btn-accent" onclick="goToStep2back()" style="margin-top:8px;">Back</button>
+  </div>
+
+  <!-- Step 4: Success -->
+  <div class="card hidden" id="step4" style="text-align:center;">
+    <div class="success-icon">🎉</div>
+    <h2>Payment Submitted!</h2>
+    <p>Your payment proof has been received. We'll verify it shortly.</p>
+    <div style="background:var(--sand);border-radius:10px;padding:16px;margin-bottom:20px;text-align:left;">
+      <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value" id="confName"></span></div>
+      <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value" id="confAmount" style="color:var(--green);"></span></div>
+      <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value" id="confType"></span></div>
+      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:var(--accent);">Pending Verification</span></div>
+    </div>
+    <p style="font-size:0.82rem;">Send us a message on Messenger to confirm faster:</p>
+    <a href="#" id="messengerLink" class="btn btn-messenger" target="_blank" style="margin-top:8px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.434 5.503 3.678 7.2V22l3.455-1.9c.92.256 1.895.393 2.867.393 5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.059 12.439l-2.549-2.717L5.5 14.439l5.5-5.878 2.611 2.717 4.947-2.717-5.5 5.878z"/></svg>
+      Confirm via Messenger
+    </a>
+    <a href="/" class="back-link">Back to Comarian's Place</a>
+  </div>
+</div>
+
+<script>
+  let currentStep = 1;
+
+  function setStep(n) {
+    currentStep = n;
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById('step' + i).classList.toggle('hidden', i !== n);
+      const ind = document.getElementById('step' + i + 'ind');
+      ind.classList.remove('active', 'done');
+      if (i < n) ind.classList.add('done');
+      if (i === n) ind.classList.add('active');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateAmount() {
+    const type = document.getElementById('payType').value;
+    const input = document.getElementById('payAmount');
+    if (type === 'security') { input.value = 3000; }
+    else if (type === 'custom') { input.value = ''; input.focus(); }
+    else { input.value = ''; }
+  }
+
+  function goToStep1() { setStep(1); }
+
+  function goToStep2() {
+    const name = document.getElementById('payName').value.trim();
+    const email = document.getElementById('payEmail').value.trim();
+    const amount = document.getElementById('payAmount').value;
+    if (!name) return alert('Please enter your name.');
+    if (!email) return alert('Please enter your email.');
+    if (!amount || amount <= 0) return alert('Please enter the amount to pay.');
+
+    document.getElementById('qrAmount').textContent = 'P' + Number(amount).toLocaleString();
+    document.getElementById('qrRef').textContent = name.split(' ')[0].toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
+    setStep(2);
+  }
+
+  function goToStep2back() { setStep(2); }
+  function goToStep3() { setStep(3); }
+
+  function previewFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const preview = document.getElementById('uploadPreview');
+    const area = document.getElementById('uploadArea');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.classList.remove('hidden');
+      area.classList.add('has-file');
+      area.querySelector('p').textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function submitPayment() {
+    const file = document.getElementById('proofInput').files[0];
+    if (!file) return alert('Please upload your payment screenshot.');
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    const name = document.getElementById('payName').value.trim();
+    const email = document.getElementById('payEmail').value.trim();
+    const phone = document.getElementById('payPhone').value.trim();
+    const amount = document.getElementById('payAmount').value;
+    const payType = document.getElementById('payType');
+    const payTypeText = payType.options[payType.selectedIndex].text;
+    const refNumber = document.getElementById('refNumber').value.trim();
+
+    // Read file as base64
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        // Upload proof
+        const res = await fetch('/api/upload-proof', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            booking_id: 'payment-' + Date.now(),
+            image_data: e.target.result,
+            file_name: file.name,
+            guest_name: name,
+            email: email,
+            phone: phone,
+            amount: amount,
+            payment_type: payTypeText,
+            ref_number: refNumber,
+          }),
+        });
+
+        // Show success
+        document.getElementById('confName').textContent = name;
+        document.getElementById('confAmount').textContent = 'P' + Number(amount).toLocaleString();
+        document.getElementById('confType').textContent = payTypeText;
+
+        // Build Messenger link
+        const msg = encodeURIComponent(
+          'Hi! I\'m ' + name + '. I just paid P' + Number(amount).toLocaleString() +
+          ' (' + payTypeText + ') for my booking at Comarian\'s Place.' +
+          (refNumber ? ' Ref: ' + refNumber : '') +
+          ' Payment proof has been uploaded on the website.'
+        );
+        document.getElementById('messengerLink').href = 'https://m.me/comariansplace?text=' + msg;
+
+        setStep(4);
+      } catch (err) {
+        alert('Upload failed. Please try again or contact us directly.');
+      }
+      btn.disabled = false;
+      btn.textContent = 'Submit Payment Proof';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Check URL params for pre-fill
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('name')) document.getElementById('payName').value = params.get('name');
+  if (params.get('email')) document.getElementById('payEmail').value = params.get('email');
+  if (params.get('amount')) document.getElementById('payAmount').value = params.get('amount');
+  if (params.get('phone')) document.getElementById('payPhone').value = params.get('phone');
+</script>
+</body>
+</html>
