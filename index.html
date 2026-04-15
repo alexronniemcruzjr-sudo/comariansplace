@@ -1262,49 +1262,50 @@
   let dpCOMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
   // Find the first blocked date on or after a given date
-  function getMaxCheckout(checkInStr) {
-    // Find the first blocked date after check-in
-    const sorted = blockedDates.filter(function(d) { return d >= checkInStr; }).sort();
-    if (sorted.length === 0) return null;
-    // Max checkout = first blocked date (guest can check out on that day, since checkout noon < checkin 3PM)
-    return sorted[0];
+  function getFirstBlockedAfter(dateStr) {
+    var sorted = blockedDates.filter(function(d) { return d >= dateStr; }).sort();
+    return sorted.length > 0 ? sorted[0] : null;
   }
 
-  function renderDP(container, monthDate, minDateStr, selectedVal, onSelect, maxDateStr) {
-    const year = monthDate.getFullYear();
-    const month = monthDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const monthName = monthDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
-    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  function renderDP(container, monthDate, minDateStr, selectedVal, onSelect, checkInStr) {
+    var year = monthDate.getFullYear();
+    var month = monthDate.getMonth();
+    var firstDay = new Date(year, month, 1).getDay();
+    var daysInMonth = new Date(year, month + 1, 0).getDate();
+    var monthName = monthDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+    var todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    let html = '<div class="dp-nav">';
+    // For checkout mode: find max selectable date (day before first booked date)
+    var isCheckout = !!checkInStr;
+    var firstBlocked = isCheckout ? getFirstBlockedAfter(minDateStr) : null;
+
+    var html = '<div class="dp-nav">';
     html += '<button type="button" data-dir="-1">&larr;</button>';
     html += '<span class="dp-month-label">' + monthName + '</span>';
     html += '<button type="button" data-dir="1">&rarr;</button>';
     html += '</div>';
     html += '<div class="dp-grid">';
 
-    const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
-    for (const d of days) html += '<div class="dp-hdr">' + d + '</div>';
-    for (let i = 0; i < firstDay; i++) html += '<div class="dp-cell empty"></div>';
+    var days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    for (var i = 0; i < days.length; i++) html += '<div class="dp-hdr">' + days[i] + '</div>';
+    for (var i = 0; i < firstDay; i++) html += '<div class="dp-cell empty"></div>';
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateObj = new Date(year, month, d);
-      const dateStr = toDateStr(dateObj);
-      let cls = 'dp-cell';
+    for (var d = 1; d <= daysInMonth; d++) {
+      var dateObj = new Date(year, month, d);
+      var dateStr = toDateStr(dateObj);
+      var cls = 'dp-cell';
 
       if (dateStr === todayStr) cls += ' today';
       if (dateStr === selectedVal) cls += ' selected';
 
       if (dateObj < todayDate || (minDateStr && dateStr < minDateStr)) {
         cls += ' past';
-      } else if (maxDateStr && dateStr > maxDateStr) {
-        // For checkout: dates after the first blocked date are unavailable
+      } else if (blockedDates.includes(dateStr)) {
+        // Always show booked dates as RED — both check-in and check-out
         cls += ' blocked';
-      } else if (!maxDateStr && blockedDates.includes(dateStr)) {
-        // For check-in: blocked dates are shown as booked
-        cls += ' blocked';
+      } else if (isCheckout && firstBlocked && dateStr > firstBlocked) {
+        // Checkout: dates after a booked date are unavailable (can't skip over a booking)
+        cls += ' past';
       } else {
         cls += ' available';
       }
@@ -1324,9 +1325,9 @@
     container.querySelectorAll('.dp-nav button').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        const dir = parseInt(this.getAttribute('data-dir'));
+        var dir = parseInt(this.getAttribute('data-dir'));
         monthDate.setMonth(monthDate.getMonth() + dir);
-        renderDP(container, monthDate, minDateStr, selectedVal, onSelect, maxDateStr);
+        renderDP(container, monthDate, minDateStr, selectedVal, onSelect, checkInStr);
       });
     });
 
@@ -1371,7 +1372,7 @@
       dpCOMonth = new Date(new Date(dateStr + 'T00:00:00').getFullYear(), new Date(dateStr + 'T00:00:00').getMonth(), 1);
 
       // Auto-open check-out picker
-      var maxCO = getMaxCheckout(toDateStr(ciDate));
+      var ciValForCO = dateStr;
       setTimeout(function() {
         renderDP(dpCO, dpCOMonth, toDateStr(ciDate), '', function(coDateStr) {
           checkOutEl.value = coDateStr;
@@ -1379,7 +1380,7 @@
           coError.style.display = 'none';
           closeAllDP();
           updateSummary();
-        }, maxCO);
+        }, ciValForCO);
         dpCO.classList.add('open');
       }, 150);
     });
@@ -1395,14 +1396,13 @@
     if (!ciVal) return;
     const ciDate = new Date(ciVal + 'T00:00:00');
     ciDate.setDate(ciDate.getDate() + 1);
-    var maxCO = getMaxCheckout(toDateStr(ciDate));
     renderDP(dpCO, dpCOMonth, toDateStr(ciDate), checkOutEl.value, function(coDateStr) {
       checkOutEl.value = coDateStr;
       coDisplay.value = formatDateDisplay(coDateStr);
       coError.style.display = 'none';
       closeAllDP();
       updateSummary();
-    }, maxCO);
+    }, ciVal);
     dpCO.classList.add('open');
   });
 
