@@ -1493,7 +1493,8 @@
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to submit');
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to submit');
 
       const dpAmount = Math.round(totalPrice * 0.5);
       const payUrl = '/pay.html?name=' + encodeURIComponent(guestName) + '&email=' + encodeURIComponent(guestEmail) + '&phone=' + encodeURIComponent(guestPhone) + '&amount=' + dpAmount;
@@ -1521,7 +1522,7 @@
     } catch (err) {
       document.getElementById('modalTitle').textContent = '⚠️ Submission Error';
       document.getElementById('modalMsg').textContent =
-        'Sorry, there was a problem submitting your reservation. Please try again or contact us directly at 0916-479-3432.';
+        'Sorry, there was a problem submitting your reservation (' + err.message + '). Please try again or contact us directly at 0916-479-3432.';
       document.getElementById('modalOverlay').classList.add('show');
     }
 
