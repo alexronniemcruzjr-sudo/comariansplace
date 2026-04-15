@@ -236,7 +236,10 @@
       <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value" id="confType"></span></div>
       <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:var(--accent);">Pending Verification</span></div>
     </div>
-    <p style="font-size:0.82rem;">Send us a message on Messenger to confirm faster:</p>
+    <a href="#" id="receiptLink" class="btn btn-green" target="_blank" style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;">
+      🧾 View & Save Receipt
+    </a>
+    <p style="font-size:0.82rem;margin-top:16px;">Send us a message on Messenger to confirm faster:</p>
     <a href="#" id="messengerLink" class="btn btn-messenger" target="_blank" style="margin-top:8px;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.908 1.434 5.503 3.678 7.2V22l3.455-1.9c.92.256 1.895.393 2.867.393 5.523 0 10-4.145 10-9.243S17.523 2 12 2zm1.059 12.439l-2.549-2.717L5.5 14.439l5.5-5.878 2.611 2.717 4.947-2.717-5.5 5.878z"/></svg>
       Confirm via Messenger
@@ -345,6 +348,15 @@
           ' Payment proof has been uploaded on the website.'
         );
         document.getElementById('messengerLink').href = 'https://m.me/comariansplace?text=' + msg;
+
+        // Build receipt link
+        const receiptUrl = '/receipt.html?name=' + encodeURIComponent(name) +
+          '&email=' + encodeURIComponent(email) +
+          '&phone=' + encodeURIComponent(phone) +
+          '&amount=' + amount +
+          '&type=' + encodeURIComponent(payTypeText) +
+          '&ref=' + encodeURIComponent(refNumber || 'N/A');
+        document.getElementById('receiptLink').href = receiptUrl;
 
         setStep(4);
       } catch (err) {

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Receipt — Comarian's Place</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --sand: #f5f0e8; --earth: #8b6f47; --earth-dark: #5c4730;
+      --green: #3d5a3e; --green-light: #5a7d5b; --white: #fdfaf5;
+      --text: #2a2018; --text-light: #6b5a45; --accent: #c8a96e;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--sand); color: var(--text); min-height: 100vh; padding: 24px; }
+
+    .receipt-container { max-width: 520px; margin: 0 auto; }
+
+    .actions {
+      display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;
+    }
+    .action-btn {
+      padding: 10px 24px; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-print { background: var(--green); color: var(--white); }
+    .btn-print:hover { background: var(--green-light); }
+    .btn-save { background: var(--accent); color: var(--earth-dark); }
+    .btn-save:hover { background: #d4b87a; }
+    .btn-back { background: var(--sand); color: var(--text-light); border: 1.5px solid #ddd; }
+    .btn-back:hover { background: #e8e0d0; }
+
+    /* Receipt Card */
+    .receipt {
+      background: white; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    }
+
+    .receipt-header {
+      background: linear-gradient(135deg, var(--earth-dark), var(--green));
+      padding: 28px 32px; text-align: center; color: white;
+    }
+    .receipt-logo {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.6rem;
+      font-weight: 600; margin-bottom: 4px;
+    }
+    .receipt-logo span { color: var(--accent); font-style: italic; }
+    .receipt-subtitle { font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7; }
+
+    .receipt-badge {
+      display: inline-block; background: rgba(255,255,255,0.15); color: white;
+      padding: 6px 16px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase; margin-top: 16px;
+    }
+
+    .receipt-body { padding: 28px 32px; }
+
+    .receipt-amount {
+      text-align: center; padding: 20px 0; margin-bottom: 20px;
+      border-bottom: 2px dashed #e8e0d0;
+    }
+    .receipt-amount-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); margin-bottom: 4px; }
+    .receipt-amount-value { font-size: 2.4rem; font-weight: 700; color: var(--green); }
+
+    .receipt-row {
+      display: flex; justify-content: space-between; padding: 10px 0;
+      border-bottom: 1px solid #f5f0e8; font-size: 0.85rem;
+    }
+    .receipt-row:last-child { border-bottom: none; }
+    .receipt-label { color: var(--text-light); }
+    .receipt-value { font-weight: 500; color: var(--earth-dark); text-align: right; max-width: 60%; }
+
+    .receipt-status {
+      text-align: center; margin-top: 20px; padding: 16px;
+      background: #fef3c7; border-radius: 10px;
+    }
+    .receipt-status-text { font-size: 0.82rem; color: #92400e; font-weight: 500; }
+
+    .receipt-footer {
+      text-align: center; padding: 20px 32px 28px;
+      border-top: 2px dashed #e8e0d0;
+    }
+    .receipt-footer p { font-size: 0.75rem; color: var(--text-light); line-height: 1.6; }
+    .receipt-footer .receipt-id { font-family: monospace; font-size: 0.72rem; color: var(--accent); margin-top: 8px; }
+
+    .receipt-qr {
+      text-align: center; margin-top: 16px;
+    }
+    .receipt-qr p { font-size: 0.7rem; color: var(--text-light); margin-bottom: 6px; }
+
+    /* Print styles */
+    @media print {
+      body { background: white; padding: 0; }
+      .actions { display: none !important; }
+      .receipt { box-shadow: none; border: 1px solid #ddd; }
+      .receipt-container { max-width: 100%; }
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      .receipt-body, .receipt-header, .receipt-footer { padding-left: 20px; padding-right: 20px; }
+      .receipt-amount-value { font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="receipt-container">
+  <!-- Action Buttons -->
+  <div class="actions">
+    <button class="action-btn btn-print" onclick="window.print()">🖨️ Print Receipt</button>
+    <button class="action-btn btn-save" onclick="saveScreenshot()">📥 Save as Image</button>
+    <a href="/" class="action-btn btn-back" style="text-decoration:none;">Back to Site</a>
+  </div>
+
+  <!-- Receipt -->
+  <div class="receipt" id="receipt">
+    <div class="receipt-header">
+      <div class="receipt-logo">Comarian's <span>Place</span></div>
+      <div class="receipt-subtitle">Hotel & Resort — Magalang, Pampanga</div>
+      <div class="receipt-badge">Payment Receipt</div>
+    </div>
+
+    <div class="receipt-body">
+      <div class="receipt-amount">
+        <div class="receipt-amount-label">Amount Paid</div>
+        <div class="receipt-amount-value" id="rAmount">—</div>
+      </div>
+
+      <div class="receipt-row">
+        <span class="receipt-label">Guest Name</span>
+        <span class="receipt-value" id="rName">—</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-label">Email</span>
+        <span class="receipt-value" id="rEmail">—</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-label">Phone</span>
+        <span class="receipt-value" id="rPhone">—</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-label">Payment Type</span>
+        <span class="receipt-value" id="rType">—</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-label">Reference No.</span>
+        <span class="receipt-value" id="rRef">—</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-label">Date & Time</span>
+        <span class="receipt-value" id="rDate">—</span>
+      </div>
+
+      <div class="receipt-status">
+        <div class="receipt-status-text">⏳ Pending Verification — We'll confirm within 24 hours</div>
+      </div>
+    </div>
+
+    <div class="receipt-footer">
+      <p>Thank you for your payment! If you have any questions, contact us via <a href="https://m.me/comariansplace" style="color:var(--green);">Messenger</a> or call <strong>0916-479-3432</strong>.</p>
+      <div class="receipt-id" id="rId">—</div>
+      <div class="receipt-qr">
+        <p>Comarian's Place — Sitio Cubul, San Nicolas II, Magalang, Pampanga</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Read URL params
+  const p = new URLSearchParams(window.location.search);
+  const name = p.get('name') || '—';
+  const email = p.get('email') || '—';
+  const phone = p.get('phone') || '—';
+  const amount = p.get('amount') || '0';
+  const type = p.get('type') || '—';
+  const ref = p.get('ref') || '—';
+  const ts = new Date();
+
+  document.getElementById('rName').textContent = name;
+  document.getElementById('rEmail').textContent = email;
+  document.getElementById('rPhone').textContent = phone;
+  document.getElementById('rAmount').textContent = 'P' + Number(amount).toLocaleString();
+  document.getElementById('rType').textContent = type;
+  document.getElementById('rRef').textContent = ref;
+  document.getElementById('rDate').textContent = ts.toLocaleDateString('en-PH', {
+    month: 'long', day: 'numeric', year: 'numeric'
+  }) + ' at ' + ts.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+
+  const receiptId = 'CP-' + ts.getFullYear() + ('0' + (ts.getMonth()+1)).slice(-2) + ('0' + ts.getDate()).slice(-2) + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  document.getElementById('rId').textContent = 'Receipt ID: ' + receiptId;
+
+  // Save as image using canvas
+  function saveScreenshot() {
+    const el = document.getElementById('receipt');
+    // Use html2canvas if available, otherwise prompt print
+    if (typeof html2canvas !== 'undefined') {
+      html2canvas(el, { scale: 2, backgroundColor: '#ffffff' }).then(function(canvas) {
+        const link = document.createElement('a');
+        link.download = 'Comarians-Place-Receipt-' + receiptId + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    } else {
+      // Fallback: load html2canvas dynamically
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      script.onload = function() {
+        html2canvas(el, { scale: 2, backgroundColor: '#ffffff' }).then(function(canvas) {
+          const link = document.createElement('a');
+          link.download = 'Comarians-Place-Receipt-' + receiptId + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        });
+      };
+      document.head.appendChild(script);
+    }
+  }
+</script>
+</body>
+</html>
