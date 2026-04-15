@@ -1478,23 +1478,28 @@
     btn.textContent = 'Submitting...';
 
     try {
+      const payload = {
+        guest_name: guestName,
+        email: guestEmail,
+        phone: guestPhone,
+        check_in: ciVal,
+        check_out: coVal,
+        guests: guestCount,
+        room_type: roomName,
+        total_price: totalPrice,
+      };
+      console.log('Booking payload:', JSON.stringify(payload));
+
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          guest_name: guestName,
-          email: guestEmail,
-          phone: guestPhone,
-          check_in: ciVal,
-          check_out: coVal,
-          guests: guestCount,
-          room_type: roomName,
-          total_price: totalPrice,
-        }),
+        body: JSON.stringify(payload),
       });
 
+      console.log('Response status:', res.status);
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Failed to submit');
+      console.log('Response body:', JSON.stringify(result));
+      if (!res.ok) throw new Error(result.error || 'Server returned ' + res.status);
 
       const dpAmount = Math.round(totalPrice * 0.5);
       const payUrl = '/pay.html?name=' + encodeURIComponent(guestName) + '&email=' + encodeURIComponent(guestEmail) + '&phone=' + encodeURIComponent(guestPhone) + '&amount=' + dpAmount;
