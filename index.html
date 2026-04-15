@@ -1261,7 +1261,16 @@
   let dpCIMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   let dpCOMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  function renderDP(container, monthDate, minDateStr, selectedVal, onSelect) {
+  // Find the first blocked date on or after a given date
+  function getMaxCheckout(checkInStr) {
+    // Find the first blocked date after check-in
+    const sorted = blockedDates.filter(function(d) { return d >= checkInStr; }).sort();
+    if (sorted.length === 0) return null;
+    // Max checkout = first blocked date (guest can check out on that day, since checkout noon < checkin 3PM)
+    return sorted[0];
+  }
+
+  function renderDP(container, monthDate, minDateStr, selectedVal, onSelect, maxDateStr) {
     const year = monthDate.getFullYear();
     const month = monthDate.getMonth();
     const firstDay = new Date(year, month, 1).getDay();
@@ -1290,7 +1299,11 @@
 
       if (dateObj < todayDate || (minDateStr && dateStr < minDateStr)) {
         cls += ' past';
-      } else if (blockedDates.includes(dateStr)) {
+      } else if (maxDateStr && dateStr > maxDateStr) {
+        // For checkout: dates after the first blocked date are unavailable
+        cls += ' blocked';
+      } else if (!maxDateStr && blockedDates.includes(dateStr)) {
+        // For check-in: blocked dates are shown as booked
         cls += ' blocked';
       } else {
         cls += ' available';
@@ -1313,7 +1326,7 @@
         e.stopPropagation();
         const dir = parseInt(this.getAttribute('data-dir'));
         monthDate.setMonth(monthDate.getMonth() + dir);
-        renderDP(container, monthDate, minDateStr, selectedVal, onSelect);
+        renderDP(container, monthDate, minDateStr, selectedVal, onSelect, maxDateStr);
       });
     });
 
@@ -1358,19 +1371,15 @@
       dpCOMonth = new Date(new Date(dateStr + 'T00:00:00').getFullYear(), new Date(dateStr + 'T00:00:00').getMonth(), 1);
 
       // Auto-open check-out picker
+      var maxCO = getMaxCheckout(toDateStr(ciDate));
       setTimeout(function() {
         renderDP(dpCO, dpCOMonth, toDateStr(ciDate), '', function(coDateStr) {
-          if (hasBlockedDateInRange(checkInEl.value, coDateStr)) {
-            coError.textContent = 'Your selected dates overlap with an existing booking. Please choose different dates.';
-            coError.style.display = 'block';
-            return;
-          }
           checkOutEl.value = coDateStr;
           coDisplay.value = formatDateDisplay(coDateStr);
           coError.style.display = 'none';
           closeAllDP();
           updateSummary();
-        });
+        }, maxCO);
         dpCO.classList.add('open');
       }, 150);
     });
@@ -1386,18 +1395,14 @@
     if (!ciVal) return;
     const ciDate = new Date(ciVal + 'T00:00:00');
     ciDate.setDate(ciDate.getDate() + 1);
+    var maxCO = getMaxCheckout(toDateStr(ciDate));
     renderDP(dpCO, dpCOMonth, toDateStr(ciDate), checkOutEl.value, function(coDateStr) {
-      if (hasBlockedDateInRange(checkInEl.value, coDateStr)) {
-        coError.textContent = 'Your selected dates overlap with an existing booking. Please choose different dates.';
-        coError.style.display = 'block';
-        return;
-      }
       checkOutEl.value = coDateStr;
       coDisplay.value = formatDateDisplay(coDateStr);
       coError.style.display = 'none';
       closeAllDP();
       updateSummary();
-    });
+    }, maxCO);
     dpCO.classList.add('open');
   });
 
@@ -1478,28 +1483,25 @@
     btn.textContent = 'Submitting...';
 
     try {
-      const payload = {
-        guest_name: guestName,
-        email: guestEmail,
-        phone: guestPhone,
-        check_in: ciVal,
-        check_out: coVal,
-        guests: guestCount,
-        room_type: roomName,
-        total_price: totalPrice,
-      };
-      console.log('Booking payload:', JSON.stringify(payload));
-
       const res = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          guest_name: guestName,
+          email: guestEmail,
+          phone: guestPhone,
+          check_in: ciVal,
+          check_out: coVal,
+          guests: guestCount,
+          room_type: roomName,
+          total_price: totalPrice,
+        }),
       });
 
-      console.log('Response status:', res.status);
-      const result = await res.json();
-      console.log('Response body:', JSON.stringify(result));
-      if (!res.ok) throw new Error(result.error || 'Server returned ' + res.status);
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.error || 'Server returned ' + res.status);
+      }
 
       const dpAmount = Math.round(totalPrice * 0.5);
       const payUrl = '/pay.html?name=' + encodeURIComponent(guestName) + '&email=' + encodeURIComponent(guestEmail) + '&phone=' + encodeURIComponent(guestPhone) + '&amount=' + dpAmount;
