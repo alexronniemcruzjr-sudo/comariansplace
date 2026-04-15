@@ -89,7 +89,7 @@ module.exports = async function handler(req, res) {
 
   // DELETE — Delete booking
   if (req.method === 'DELETE') {
-    const { id } = req.body || req.query;
+    const id = (req.body && req.body.id) || (req.query && req.query.id);
     if (!id) return res.status(400).json({ error: 'Missing booking id' });
 
     const { error } = await supabase.from('bookings').delete().eq('id', id);

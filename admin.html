@@ -322,8 +322,7 @@
           <div class="bc-actions">
             ${b.payment_status !== 'paid' ? `<button class="action-btn mark-paid" onclick="updateStatus('${b.id}','paid')">Mark Paid</button>` : ''}
             ${b.payment_status === 'pending' ? `<button class="action-btn mark-partial" onclick="updateStatus('${b.id}','partial')">Mark Partial</button>` : ''}
-            <button class="action-btn view-proof" onclick="showUploadModal('${b.id}')">Upload Proof</button>
-            ${b.payment_proof_url ? `<button class="action-btn view-proof" onclick="viewProof('${esc(b.payment_proof_url)}')">View Proof</button>` : ''}
+            ${b.payment_proof_url ? `<button class="action-btn view-proof" onclick="viewProof('${esc(b.payment_proof_url)}')" style="background:#d1fae5;color:#065f46;">View Receipt</button>` : `<button class="action-btn view-proof" onclick="showUploadModal('${b.id}')">Upload Proof</button>`}
             <button class="action-btn delete" onclick="showDeleteModal('${b.id}','${esc(b.guest_name)}')">Delete</button>
           </div>
         </div>`;
@@ -373,7 +372,17 @@
 
   async function confirmDelete() {
     if (!deleteId) return;
-    await apiFetch('/api/bookings?id=' + deleteId, { method: 'DELETE' });
+    const btn = document.querySelector('#deleteModal .modal-btn.confirm');
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+    try {
+      await apiFetch('/api/bookings', {
+        method: 'DELETE',
+        body: JSON.stringify({ id: deleteId }),
+      });
+    } catch (e) {}
+    btn.disabled = false;
+    btn.textContent = 'Delete';
     closeDeleteModal();
     loadBookings();
   }
