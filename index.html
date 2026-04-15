@@ -921,6 +921,7 @@
 
     <div class="booking-card">
       <h3>Check Availability</h3>
+      <div id="blockedInfo" style="display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:0.78rem;color:#92400e;line-height:1.6;margin-bottom:16px;"></div>
       <div class="booking-grid" style="grid-template-columns:1fr 1fr 1fr;">
         <div class="form-group">
           <label>Full Name</label>
@@ -1103,6 +1104,47 @@
   const coError    = document.getElementById('coError');
   const ciError    = document.getElementById('ciError');
 
+  // Blocked dates
+  let blockedDates = [];
+
+  async function loadBlockedDates() {
+    try {
+      const res = await fetch('/api/blocked-dates');
+      const data = await res.json();
+      blockedDates = data.blocked || [];
+      renderBlockedInfo();
+    } catch(e) { console.log('Could not load blocked dates'); }
+  }
+
+  function isDateBlocked(dateStr) {
+    return blockedDates.includes(dateStr);
+  }
+
+  function hasBlockedDateInRange(startStr, endStr) {
+    const start = new Date(startStr + 'T00:00:00');
+    const end = new Date(endStr + 'T00:00:00');
+    const current = new Date(start);
+    while (current < end) {
+      if (isDateBlocked(toDateStr(current))) return true;
+      current.setDate(current.getDate() + 1);
+    }
+    return false;
+  }
+
+  function renderBlockedInfo() {
+    if (blockedDates.length === 0) return;
+    const infoEl = document.getElementById('blockedInfo');
+    if (infoEl) {
+      const upcoming = blockedDates.slice(0, 10).map(d => {
+        return new Date(d + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+      });
+      infoEl.innerHTML = '<strong>Booked dates:</strong> ' + upcoming.join(', ') + (blockedDates.length > 10 ? '...' : '');
+      infoEl.style.display = 'block';
+    }
+  }
+
+  loadBlockedDates();
+
   // Step 1: Set today as min for check-in
   checkInEl.min = todayStr;
 
@@ -1115,6 +1157,14 @@
       checkOutEl.disabled = true;
       checkOutEl.value = '';
       hideSummary();
+      return;
+    }
+
+    // Check if selected date is blocked
+    if (isDateBlocked(ciVal)) {
+      ciError.textContent = 'This date is already booked. Please choose another date.';
+      ciError.style.display = 'block';
+      this.value = '';
       return;
     }
 
@@ -1133,9 +1183,19 @@
     setTimeout(() => checkOutEl.focus(), 100);
   });
 
-  // Step 3: When check-out is picked, show summary
+  // Step 3: When check-out is picked, validate and show summary
   checkOutEl.addEventListener('change', function() {
     coError.style.display = 'none';
+    const ciVal = checkInEl.value;
+    const coVal = this.value;
+
+    if (ciVal && coVal && hasBlockedDateInRange(ciVal, coVal)) {
+      coError.textContent = 'Your selected dates overlap with an existing booking. Please choose different dates.';
+      coError.style.display = 'block';
+      this.value = '';
+      hideSummary();
+      return;
+    }
     updateSummary();
   });
 
@@ -1195,6 +1255,10 @@
     if (!ciVal) { ciError.style.display = 'block'; valid = false; }
     if (!coVal) { coError.style.display = 'block'; valid = false; }
     if (!roomVal) { alert('Please select a room type.'); valid = false; }
+    if (ciVal && coVal && hasBlockedDateInRange(ciVal, coVal)) {
+      alert('Your selected dates overlap with an existing booking. Please choose different dates.');
+      valid = false;
+    }
 
     if (!valid) return;
 
