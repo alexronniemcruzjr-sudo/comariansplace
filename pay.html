@@ -326,15 +326,9 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            booking_id: 'payment-' + Date.now(),
             image_data: e.target.result,
             file_name: file.name,
-            guest_name: name,
             email: email,
-            phone: phone,
-            amount: amount,
-            payment_type: payTypeText,
-            ref_number: refNumber,
           }),
         });
 

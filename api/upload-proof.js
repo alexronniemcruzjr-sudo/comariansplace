@@ -9,11 +9,13 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { booking_id, image_data, file_name } = req.body;
+  const { booking_id, image_data, file_name, email } = req.body;
 
-  if (!booking_id || !image_data) {
-    return res.status(400).json({ error: 'Missing booking_id or image_data' });
+  if (!image_data) {
+    return res.status(400).json({ error: 'Missing image_data' });
   }
+
+  const uploadId = booking_id || ('payment-' + Date.now());
 
   // Decode base64 image
   const matches = image_data.match(/^data:(.+);base64,(.+)$/);
@@ -25,7 +27,7 @@ module.exports = async function handler(req, res) {
   const base64Data = matches[2];
   const buffer = Buffer.from(base64Data, 'base64');
   const ext = contentType.split('/')[1] || 'png';
-  const fileName = `proofs/${booking_id}/${Date.now()}.${ext}`;
+  const fileName = `proofs/${uploadId}/${Date.now()}.${ext}`;
 
   // Upload to Supabase Storage
   const { data: uploadData, error: uploadError } = await supabase.storage
@@ -46,14 +48,30 @@ module.exports = async function handler(req, res) {
 
   const publicUrl = urlData.publicUrl;
 
-  // Update booking with proof URL
-  const { error: updateError } = await supabase
-    .from('bookings')
-    .update({ payment_proof_url: publicUrl })
-    .eq('id', booking_id);
+  // Update booking with proof URL — match by booking_id or email
+  let updateError = null;
+  if (booking_id && !booking_id.startsWith('payment-')) {
+    const { error } = await supabase
+      .from('bookings')
+      .update({ payment_proof_url: publicUrl })
+      .eq('id', booking_id);
+    updateError = error;
+  } else if (email) {
+    // Match most recent booking by email
+    const { data: bookings } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('email', email)
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-  if (updateError) {
-    return res.status(500).json({ error: 'Failed to update booking: ' + updateError.message });
+    if (bookings && bookings.length > 0) {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ payment_proof_url: publicUrl })
+        .eq('id', bookings[0].id);
+      updateError = error;
+    }
   }
 
   return res.status(200).json({ url: publicUrl });
