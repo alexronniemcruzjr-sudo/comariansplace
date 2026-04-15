@@ -412,57 +412,59 @@
       color: var(--text-light);
     }
 
-    /* AVAILABILITY CALENDAR */
-    .avail-calendar {
-      background: var(--white); border-radius: 12px; padding: 32px;
-      margin-top: 48px; box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+    /* CUSTOM DATE PICKER */
+    .dp-wrap { position: relative; }
+    .dp-input {
+      width: 100%; padding: 14px 16px; border: 1.5px solid var(--sand-dark); border-radius: 6px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text);
+      background: var(--white); outline: none; cursor: pointer; transition: border-color 0.2s;
     }
-    .avail-calendar h3 {
-      font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 600;
-      color: var(--earth-dark); margin-bottom: 8px;
+    .dp-input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(61,90,62,0.1); }
+    .dp-input:disabled { opacity: 0.5; cursor: not-allowed; }
+    .dp-dropdown {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
+      background: var(--white); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+      padding: 16px; width: 300px; border: 1px solid var(--sand-dark);
     }
-    .avail-calendar .avail-sub { font-size: 0.82rem; color: var(--text-light); margin-bottom: 20px; }
-    .avail-legend {
-      display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;
+    .dp-dropdown.open { display: block; }
+    .dp-nav {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
     }
-    .avail-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-light); }
-    .avail-legend-box {
-      width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0;
+    .dp-nav button {
+      background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-light);
+      padding: 4px 8px; border-radius: 4px; transition: background 0.15s;
     }
-    .avail-legend-box.available { background: var(--green-light); }
-    .avail-legend-box.booked { background: #dc2626; }
-    .avail-legend-box.past { background: var(--sand-dark); }
-    .cal-nav {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+    .dp-nav button:hover { background: var(--sand); }
+    .dp-month-label {
+      font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 600; color: var(--earth-dark);
     }
-    .cal-nav button {
-      background: var(--sand); border: 1.5px solid var(--sand-dark); border-radius: 6px;
-      padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
-      cursor: pointer; color: var(--text); transition: all 0.2s;
+    .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .dp-hdr {
+      text-align: center; font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-light); padding: 6px 0;
     }
-    .cal-nav button:hover { background: var(--sand-dark); }
-    .cal-nav .cal-month-label {
-      font-family: 'Cormorant Garamond', serif; font-size: 1.2rem;
-      font-weight: 600; color: var(--earth-dark);
+    .dp-cell {
+      text-align: center; padding: 8px 2px; border-radius: 6px; font-size: 0.8rem;
+      cursor: pointer; transition: all 0.15s; font-weight: 500;
     }
-    .cal-grid {
-      display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+    .dp-cell.empty { cursor: default; }
+    .dp-cell.past { color: #ccc; cursor: not-allowed; }
+    .dp-cell.blocked {
+      background: rgba(220,38,38,0.1); color: #ccc; cursor: not-allowed;
+      text-decoration: line-through; position: relative;
     }
-    .cal-header {
-      text-align: center; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.5px; color: var(--text-light); padding: 8px 0;
+    .dp-cell.available:hover { background: rgba(61,90,62,0.15); color: var(--green); }
+    .dp-cell.available { color: var(--text); }
+    .dp-cell.selected { background: var(--green); color: var(--white); font-weight: 600; }
+    .dp-cell.today { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .dp-legend {
+      display: flex; gap: 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--sand);
     }
-    .cal-day {
-      text-align: center; padding: 10px 4px; border-radius: 6px; font-size: 0.82rem;
-      font-weight: 500; transition: all 0.15s; position: relative;
-    }
-    .cal-day.empty { background: none; }
-    .cal-day.past { background: var(--sand); color: #bbb; }
-    .cal-day.available { background: rgba(90,125,91,0.12); color: var(--green); }
-    .cal-day.booked { background: rgba(220,38,38,0.12); color: #dc2626; font-weight: 600; }
-    .cal-day.today { outline: 2px solid var(--accent); outline-offset: -2px; }
-    .cal-months-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    @media (max-width: 700px) { .cal-months-wrap { grid-template-columns: 1fr; } }
+    .dp-legend-item { display: flex; align-items: center; gap: 4px; font-size: 0.65rem; color: var(--text-light); }
+    .dp-legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+    .dp-legend-dot.avail { background: var(--green-light); }
+    .dp-legend-dot.booked { background: rgba(220,38,38,0.3); }
+    @media (max-width: 600px) { .dp-dropdown { width: 280px; } }
 
     /* BOOKING */
     .booking-section {
@@ -1031,26 +1033,8 @@
     <h2 class="section-title">Book Your Stay</h2>
     <p class="section-sub">Pick your dates and room, and we'll confirm your reservation right away.</p>
 
-    <!-- AVAILABILITY CALENDAR -->
-    <div class="avail-calendar">
-      <h3>Availability Calendar</h3>
-      <p class="avail-sub">Check which dates are available before booking. Red dates are already reserved.</p>
-      <div class="avail-legend">
-        <div class="avail-legend-item"><div class="avail-legend-box available"></div> Available</div>
-        <div class="avail-legend-item"><div class="avail-legend-box booked"></div> Booked</div>
-        <div class="avail-legend-item"><div class="avail-legend-box past"></div> Past</div>
-      </div>
-      <div class="cal-nav">
-        <button onclick="shiftCalendar(-1)">&larr; Previous</button>
-        <span class="cal-month-label" id="calMonthLabel"></span>
-        <button onclick="shiftCalendar(1)">Next &rarr;</button>
-      </div>
-      <div class="cal-months-wrap" id="calMonthsWrap"></div>
-    </div>
-
     <div class="booking-card">
       <h3>Reserve Your Stay</h3>
-      <div id="blockedInfo" style="display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:10px 14px;font-size:0.78rem;color:#92400e;line-height:1.6;margin-bottom:16px;"></div>
       <div class="booking-grid" style="grid-template-columns:1fr 1fr 1fr;">
         <div class="form-group">
           <label>Full Name</label>
@@ -1068,12 +1052,20 @@
       <div class="booking-grid" style="margin-top:16px;">
         <div class="form-group">
           <label>Check-in Date</label>
-          <input type="date" id="checkIn" placeholder="Check-in"/>
+          <div class="dp-wrap">
+            <input type="text" class="dp-input" id="checkInDisplay" placeholder="Select check-in date" readonly/>
+            <input type="hidden" id="checkIn"/>
+            <div class="dp-dropdown" id="dpCheckIn"></div>
+          </div>
           <span class="date-error" id="ciError">Please select a valid check-in date.</span>
         </div>
         <div class="form-group">
           <label>Check-out Date</label>
-          <input type="date" id="checkOut" placeholder="Check-out" disabled/>
+          <div class="dp-wrap">
+            <input type="text" class="dp-input" id="checkOutDisplay" placeholder="Select check-out date" readonly disabled/>
+            <input type="hidden" id="checkOut"/>
+            <div class="dp-dropdown" id="dpCheckOut"></div>
+          </div>
           <span class="date-error" id="coError">Check-out must be after check-in.</span>
         </div>
         <div class="form-group">
@@ -1232,6 +1224,10 @@
   const checkInEl  = document.getElementById('checkIn');
   const coError    = document.getElementById('coError');
   const ciError    = document.getElementById('ciError');
+  const ciDisplay  = document.getElementById('checkInDisplay');
+  const coDisplay  = document.getElementById('checkOutDisplay');
+  const dpCI       = document.getElementById('dpCheckIn');
+  const dpCO       = document.getElementById('dpCheckOut');
 
   // Blocked dates
   let blockedDates = [];
@@ -1241,79 +1237,8 @@
       const res = await fetch('/api/blocked-dates');
       const data = await res.json();
       blockedDates = data.blocked || [];
-      renderBlockedInfo();
-      renderAvailCalendar();
     } catch(e) { console.log('Could not load blocked dates'); }
   }
-
-  // --- AVAILABILITY CALENDAR ---
-  let calStartMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-  function shiftCalendar(dir) {
-    calStartMonth.setMonth(calStartMonth.getMonth() + dir);
-    renderAvailCalendar();
-  }
-
-  function renderAvailCalendar() {
-    const wrap = document.getElementById('calMonthsWrap');
-    const label = document.getElementById('calMonthLabel');
-    if (!wrap) return;
-
-    const m1 = new Date(calStartMonth);
-    const m2 = new Date(calStartMonth);
-    m2.setMonth(m2.getMonth() + 1);
-
-    const fmt = (d) => d.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
-    label.textContent = fmt(m1) + '  —  ' + fmt(m2);
-
-    wrap.innerHTML = renderOneMonth(m1) + renderOneMonth(m2);
-  }
-
-  function renderOneMonth(monthDate) {
-    const year = monthDate.getFullYear();
-    const month = monthDate.getMonth();
-    const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const monthName = monthDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
-
-    let html = '<div><div style="text-align:center;font-weight:600;font-size:0.9rem;color:var(--earth-dark);margin-bottom:10px;font-family:Cormorant Garamond,serif;">' + monthName + '</div>';
-    html += '<div class="cal-grid">';
-
-    // Day headers
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    for (const d of days) {
-      html += '<div class="cal-header">' + d + '</div>';
-    }
-
-    // Empty cells before first day
-    for (let i = 0; i < firstDay; i++) {
-      html += '<div class="cal-day empty"></div>';
-    }
-
-    // Day cells
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateObj = new Date(year, month, d);
-      const dateStr = toDateStr(dateObj);
-      let cls = 'cal-day';
-
-      if (dateStr === todayStr) cls += ' today';
-
-      if (dateObj < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-        cls += ' past';
-      } else if (blockedDates.includes(dateStr)) {
-        cls += ' booked';
-      } else {
-        cls += ' available';
-      }
-
-      html += '<div class="' + cls + '">' + d + '</div>';
-    }
-
-    html += '</div></div>';
-    return html;
-  }
-
-  renderAvailCalendar();
 
   function isDateBlocked(dateStr) {
     return blockedDates.includes(dateStr);
@@ -1330,72 +1255,155 @@
     return false;
   }
 
-  function renderBlockedInfo() {
-    if (blockedDates.length === 0) return;
-    const infoEl = document.getElementById('blockedInfo');
-    if (infoEl) {
-      const upcoming = blockedDates.slice(0, 10).map(d => {
-        return new Date(d + 'T00:00:00').toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-      });
-      infoEl.innerHTML = '<strong>Booked dates:</strong> ' + upcoming.join(', ') + (blockedDates.length > 10 ? '...' : '');
-      infoEl.style.display = 'block';
-    }
-  }
-
   loadBlockedDates();
 
-  // Step 1: Set today as min for check-in
-  checkInEl.min = todayStr;
+  // --- CUSTOM DATE PICKER ---
+  let dpCIMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  let dpCOMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  // Step 2: When check-in is picked, enable check-out with min = checkin + 1 day
-  checkInEl.addEventListener('change', function() {
-    const ciVal = this.value;
-    ciError.style.display = 'none';
+  function renderDP(container, monthDate, minDateStr, selectedVal, onSelect) {
+    const year = monthDate.getFullYear();
+    const month = monthDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const monthName = monthDate.toLocaleDateString('en-PH', { month: 'long', year: 'numeric' });
+    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    if (!ciVal) {
-      checkOutEl.disabled = true;
+    let html = '<div class="dp-nav">';
+    html += '<button type="button" data-dir="-1">&larr;</button>';
+    html += '<span class="dp-month-label">' + monthName + '</span>';
+    html += '<button type="button" data-dir="1">&rarr;</button>';
+    html += '</div>';
+    html += '<div class="dp-grid">';
+
+    const days = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+    for (const d of days) html += '<div class="dp-hdr">' + d + '</div>';
+    for (let i = 0; i < firstDay; i++) html += '<div class="dp-cell empty"></div>';
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateObj = new Date(year, month, d);
+      const dateStr = toDateStr(dateObj);
+      let cls = 'dp-cell';
+
+      if (dateStr === todayStr) cls += ' today';
+      if (dateStr === selectedVal) cls += ' selected';
+
+      if (dateObj < todayDate || (minDateStr && dateStr < minDateStr)) {
+        cls += ' past';
+      } else if (blockedDates.includes(dateStr)) {
+        cls += ' blocked';
+      } else {
+        cls += ' available';
+      }
+
+      html += '<div class="' + cls + '" data-date="' + dateStr + '">' + d + '</div>';
+    }
+
+    html += '</div>';
+    html += '<div class="dp-legend">';
+    html += '<div class="dp-legend-item"><div class="dp-legend-dot avail"></div> Available</div>';
+    html += '<div class="dp-legend-item"><div class="dp-legend-dot booked"></div> Booked</div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    // Nav buttons
+    container.querySelectorAll('.dp-nav button').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const dir = parseInt(this.getAttribute('data-dir'));
+        monthDate.setMonth(monthDate.getMonth() + dir);
+        renderDP(container, monthDate, minDateStr, selectedVal, onSelect);
+      });
+    });
+
+    // Day click
+    container.querySelectorAll('.dp-cell.available').forEach(function(cell) {
+      cell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        onSelect(this.getAttribute('data-date'));
+      });
+    });
+  }
+
+  function formatDateDisplay(str) {
+    return new Date(str + 'T00:00:00').toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  function closeAllDP() {
+    dpCI.classList.remove('open');
+    dpCO.classList.remove('open');
+  }
+
+  // Open check-in picker
+  ciDisplay.addEventListener('click', function() {
+    if (dpCI.classList.contains('open')) { closeAllDP(); return; }
+    closeAllDP();
+    renderDP(dpCI, dpCIMonth, todayStr, checkInEl.value, function(dateStr) {
+      checkInEl.value = dateStr;
+      ciDisplay.value = formatDateDisplay(dateStr);
+      ciError.style.display = 'none';
+      closeAllDP();
+
+      // Reset check-out
       checkOutEl.value = '';
+      coDisplay.value = '';
+      coDisplay.disabled = false;
+      coError.style.display = 'none';
       hideSummary();
-      return;
-    }
 
-    // Check if selected date is blocked
-    if (isDateBlocked(ciVal)) {
-      ciError.textContent = 'This date is already booked. Please choose another date.';
-      ciError.style.display = 'block';
-      this.value = '';
-      return;
-    }
+      // Set check-out min to day after check-in
+      const ciDate = new Date(dateStr + 'T00:00:00');
+      ciDate.setDate(ciDate.getDate() + 1);
+      dpCOMonth = new Date(new Date(dateStr + 'T00:00:00').getFullYear(), new Date(dateStr + 'T00:00:00').getMonth(), 1);
 
-    // Enable check-out and set its minimum to checkin date + 1 day
-    const ciDate = new Date(ciVal + 'T00:00:00');
-    const nextDay = new Date(ciDate);
-    nextDay.setDate(nextDay.getDate() + 1);
-
-    checkOutEl.min = toDateStr(nextDay);
-    checkOutEl.disabled = false;
-    checkOutEl.value = ''; // reset so user must re-pick
-    coError.style.display = 'none';
-    hideSummary();
-
-    // Focus check-out automatically
-    setTimeout(() => checkOutEl.focus(), 100);
+      // Auto-open check-out picker
+      setTimeout(function() {
+        renderDP(dpCO, dpCOMonth, toDateStr(ciDate), '', function(coDateStr) {
+          if (hasBlockedDateInRange(checkInEl.value, coDateStr)) {
+            coError.textContent = 'Your selected dates overlap with an existing booking. Please choose different dates.';
+            coError.style.display = 'block';
+            return;
+          }
+          checkOutEl.value = coDateStr;
+          coDisplay.value = formatDateDisplay(coDateStr);
+          coError.style.display = 'none';
+          closeAllDP();
+          updateSummary();
+        });
+        dpCO.classList.add('open');
+      }, 150);
+    });
+    dpCI.classList.add('open');
   });
 
-  // Step 3: When check-out is picked, validate and show summary
-  checkOutEl.addEventListener('change', function() {
-    coError.style.display = 'none';
+  // Open check-out picker
+  coDisplay.addEventListener('click', function() {
+    if (this.disabled) return;
+    if (dpCO.classList.contains('open')) { closeAllDP(); return; }
+    closeAllDP();
     const ciVal = checkInEl.value;
-    const coVal = this.value;
+    if (!ciVal) return;
+    const ciDate = new Date(ciVal + 'T00:00:00');
+    ciDate.setDate(ciDate.getDate() + 1);
+    renderDP(dpCO, dpCOMonth, toDateStr(ciDate), checkOutEl.value, function(coDateStr) {
+      if (hasBlockedDateInRange(checkInEl.value, coDateStr)) {
+        coError.textContent = 'Your selected dates overlap with an existing booking. Please choose different dates.';
+        coError.style.display = 'block';
+        return;
+      }
+      checkOutEl.value = coDateStr;
+      coDisplay.value = formatDateDisplay(coDateStr);
+      coError.style.display = 'none';
+      closeAllDP();
+      updateSummary();
+    });
+    dpCO.classList.add('open');
+  });
 
-    if (ciVal && coVal && hasBlockedDateInRange(ciVal, coVal)) {
-      coError.textContent = 'Your selected dates overlap with an existing booking. Please choose different dates.';
-      coError.style.display = 'block';
-      this.value = '';
-      hideSummary();
-      return;
-    }
-    updateSummary();
+  // Close picker when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.dp-wrap')) closeAllDP();
   });
 
   function updateSummary() {
