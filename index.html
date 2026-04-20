@@ -453,6 +453,14 @@
       background: rgba(220,38,38,0.15); color: #dc2626; cursor: not-allowed;
       text-decoration: line-through; font-weight: 600; position: relative;
     }
+    .dp-cell.blocked.turnover {
+      cursor: pointer; text-decoration: none;
+      background: linear-gradient(135deg, rgba(61,90,62,0.18) 0 50%, rgba(220,38,38,0.18) 50% 100%);
+      color: var(--green);
+    }
+    .dp-cell.blocked.turnover:hover {
+      background: linear-gradient(135deg, rgba(61,90,62,0.32) 0 50%, rgba(220,38,38,0.25) 50% 100%);
+    }
     .dp-cell.available:hover { background: rgba(61,90,62,0.15); color: var(--green); }
     .dp-cell.available { color: var(--text); }
     .dp-cell.selected { background: var(--green); color: var(--white); font-weight: 600; }
@@ -1264,7 +1272,21 @@
   var dpCIMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   var dpCOMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  function renderDP(container, monthDate, minDateStr, selectedVal, onSelect) {
+  function renderDP(container, monthDate, minDateStr, selectedVal, onSelect, opts) {
+    opts = opts || {};
+    var mode = opts.mode || 'checkin';
+    var checkInStr = opts.checkIn || null;
+
+    // In checkout mode, find the first blocked night on/after the chosen check-in.
+    // That day is still a valid check-out (same-day turnover), but any day after it is unreachable.
+    var firstBlockedAfterCI = null;
+    if (mode === 'checkout' && checkInStr) {
+      var sorted = blockedDates.slice().sort();
+      for (var k = 0; k < sorted.length; k++) {
+        if (sorted[k] >= checkInStr) { firstBlockedAfterCI = sorted[k]; break; }
+      }
+    }
+
     var year = monthDate.getFullYear();
     var month = monthDate.getMonth();
     var firstDay = new Date(year, month, 1).getDay();
@@ -1293,8 +1315,16 @@
 
       if (dateObj < todayDate || (minDateStr && dateStr < minDateStr)) {
         cls += ' past';
+      } else if (mode === 'checkout' && firstBlockedAfterCI && dateStr > firstBlockedAfterCI) {
+        // Anything past the next booking would overlap that booking's nights.
+        cls += ' past';
       } else if (blockedDates.includes(dateStr)) {
-        cls += ' blocked';
+        // The first blocked day after check-in is still a valid check-out (turnover day).
+        if (mode === 'checkout' && dateStr === firstBlockedAfterCI) {
+          cls += ' blocked turnover';
+        } else {
+          cls += ' blocked';
+        }
       } else {
         cls += ' available';
       }
@@ -1315,11 +1345,11 @@
         e.stopPropagation();
         var dir = parseInt(this.getAttribute('data-dir'));
         monthDate.setMonth(monthDate.getMonth() + dir);
-        renderDP(container, monthDate, minDateStr, selectedVal, onSelect);
+        renderDP(container, monthDate, minDateStr, selectedVal, onSelect, opts);
       });
     });
 
-    container.querySelectorAll('.dp-cell.available').forEach(function(cell) {
+    container.querySelectorAll('.dp-cell.available, .dp-cell.turnover').forEach(function(cell) {
       cell.addEventListener('click', function(e) {
         e.stopPropagation();
         onSelect(this.getAttribute('data-date'));
@@ -1365,7 +1395,7 @@
           coError.style.display = 'none';
           closeAllDP();
           updateSummary();
-        });
+        }, { mode: 'checkout', checkIn: dateStr });
         dpCO.classList.add('open');
       }, 150);
     });
@@ -1387,7 +1417,7 @@
       coError.style.display = 'none';
       closeAllDP();
       updateSummary();
-    });
+    }, { mode: 'checkout', checkIn: ciVal });
     dpCO.classList.add('open');
   });
 
