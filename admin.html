@@ -218,21 +218,6 @@
   </div>
 </div>
 
-<!-- UPLOAD MODAL -->
-<div class="modal-overlay" id="uploadModal">
-  <div class="modal">
-    <h3>Upload Payment Proof</h3>
-    <p>Select a screenshot of the payment for this booking.</p>
-    <input type="file" id="proofFile" accept="image/*" style="margin-top:12px;font-size:0.85rem;"/>
-    <div id="uploadPreview" style="margin-top:12px;"></div>
-    <div class="modal-actions">
-      <button class="modal-btn cancel" onclick="closeUploadModal()">Cancel</button>
-      <button class="modal-btn confirm" id="uploadBtn" onclick="confirmUpload()" style="background:var(--green);">Upload</button>
-    </div>
-  </div>
-</div>
-<input type="file" id="hiddenFileInput" accept="image/*" style="display:none;"/>
-
 <script>
   const TOKEN = localStorage.getItem('cp_token');
   if (!TOKEN) window.location.href = '/login.html';
@@ -322,7 +307,7 @@
           <div class="bc-actions">
             ${b.payment_status !== 'paid' ? `<button class="action-btn mark-paid" onclick="updateStatus('${b.id}','paid')">Mark Paid</button>` : ''}
             ${b.payment_status === 'pending' ? `<button class="action-btn mark-partial" onclick="updateStatus('${b.id}','partial')">Mark Partial</button>` : ''}
-            ${b.payment_proof_url ? `<button class="action-btn view-proof" onclick="viewProof('${esc(b.payment_proof_url)}')" style="background:#d1fae5;color:#065f46;">View Receipt</button>` : `<button class="action-btn view-proof" onclick="showUploadModal('${b.id}')">Upload Proof</button>`}
+            ${b.payment_proof_url ? `<button class="action-btn view-proof" onclick="viewProof('${esc(b.payment_proof_url)}')" style="background:#d1fae5;color:#065f46;">View Receipt</button>` : `<span class="action-btn" style="background:#f3f4f6;color:#6b7280;cursor:default;">Awaiting Receipt</span>`}
             <button class="action-btn delete" onclick="showDeleteModal('${b.id}','${esc(b.guest_name)}')">Delete</button>
           </div>
         </div>`;
@@ -396,67 +381,6 @@
     localStorage.removeItem('cp_token');
     localStorage.removeItem('cp_user');
     window.location.href = '/login.html';
-  }
-
-  // Upload proof
-  let uploadBookingId = null;
-
-  function showUploadModal(id) {
-    uploadBookingId = id;
-    document.getElementById('proofFile').value = '';
-    document.getElementById('uploadPreview').innerHTML = '';
-    document.getElementById('uploadModal').classList.add('show');
-  }
-
-  function closeUploadModal() {
-    uploadBookingId = null;
-    document.getElementById('uploadModal').classList.remove('show');
-  }
-
-  document.getElementById('proofFile').addEventListener('change', function() {
-    const file = this.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      document.getElementById('uploadPreview').innerHTML =
-        '<img src="' + e.target.result + '" style="max-width:100%;border-radius:8px;margin-top:8px;max-height:300px;"/>';
-    };
-    reader.readAsDataURL(file);
-  });
-
-  async function confirmUpload() {
-    const file = document.getElementById('proofFile').files[0];
-    if (!file || !uploadBookingId) return alert('Please select an image.');
-
-    const btn = document.getElementById('uploadBtn');
-    btn.disabled = true;
-    btn.textContent = 'Uploading...';
-
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-      try {
-        const res = await apiFetch('/api/upload-proof', {
-          method: 'POST',
-          body: JSON.stringify({
-            booking_id: uploadBookingId,
-            image_data: e.target.result,
-            file_name: file.name,
-          }),
-        });
-
-        if (res && res.url) {
-          closeUploadModal();
-          loadBookings();
-        } else {
-          alert('Upload failed. Please try again.');
-        }
-      } catch (err) {
-        alert('Upload failed: ' + err.message);
-      }
-      btn.disabled = false;
-      btn.textContent = 'Upload';
-    };
-    reader.readAsDataURL(file);
   }
 
   // Load on page ready
