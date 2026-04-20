@@ -372,9 +372,20 @@
     loadBookings();
   }
 
-  function viewProof(url) {
-    document.getElementById('proofContent').innerHTML = `<img src="${url}" class="proof-img" alt="Payment proof"/>`;
+  async function viewProof(url) {
+    const content = document.getElementById('proofContent');
+    content.innerHTML = '<p style="color:var(--text-light);">Loading receipt...</p>';
     document.getElementById('proofModal').classList.add('show');
+    try {
+      const res = await apiFetch('/api/view-proof?url=' + encodeURIComponent(url));
+      if (res && res.url) {
+        content.innerHTML = `<img src="${res.url}" class="proof-img" alt="Payment proof"/>`;
+      } else {
+        content.innerHTML = '<p style="color:#b91c1c;">Receipt not available. File may have been moved or deleted.</p>';
+      }
+    } catch (err) {
+      content.innerHTML = '<p style="color:#b91c1c;">Error loading receipt: ' + err.message + '</p>';
+    }
   }
 
   function logout() {
