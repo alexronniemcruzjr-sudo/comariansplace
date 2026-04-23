@@ -10,7 +10,10 @@ const SITE_URL = process.env.SITE_URL || 'https://comarians-place.vercel.app';
 
 async function sendMail({ to, toName, subject, html }) {
   const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey || !to) return { skipped: true };
+  if (!apiKey || !to) {
+    console.log('[email] SKIPPED — apiKey?', !!apiKey, 'to?', !!to);
+    return { skipped: true };
+  }
   try {
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
@@ -26,9 +29,11 @@ async function sendMail({ to, toName, subject, html }) {
         htmlContent: html,
       }),
     });
-    const ok = res.ok;
-    return { ok, status: res.status };
+    const body = await res.text();
+    console.log('[email] →', res.status, subject, body.slice(0, 200));
+    return { ok: res.ok, status: res.status };
   } catch (err) {
+    console.log('[email] ERROR', err.message, err.stack);
     return { error: err.message };
   }
 }
