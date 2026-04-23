@@ -91,6 +91,21 @@
     .badge.pending { background: #fef3c7; color: #92400e; }
     .badge.partial { background: #dbeafe; color: #1e40af; }
     .badge.paid { background: #d1fae5; color: #065f46; }
+    .collision-banner {
+      background: #fef2f2; border-left: 4px solid var(--red); border-radius: 6px;
+      padding: 8px 12px; margin-top: 8px; font-size: 0.75rem; color: #991b1b;
+      font-weight: 500; grid-column: 1 / -1;
+    }
+    .expires-tag {
+      display: inline-block; background: #fef3c7; color: #92400e;
+      padding: 2px 8px; border-radius: 10px; font-size: 0.68rem;
+      font-weight: 500; margin-top: 4px;
+    }
+    .expires-tag.expired { background: #fee2e2; color: #991b1b; }
+    .reference-tag {
+      display: inline-block; font-size: 0.68rem; color: var(--text-light);
+      font-family: monospace; margin-top: 4px;
+    }
     .bc-status .guest-count { font-size: 0.78rem; color: var(--text-light); margin-top: 6px; }
     .bc-status .total { font-size: 1.1rem; font-weight: 700; color: var(--green); margin-top: 4px; }
     .bc-actions { display: flex; flex-direction: column; gap: 6px; }
@@ -245,11 +260,13 @@
       window.location.href = '/login.html';
       return;
     }
-    return res.json();
+    const body = await res.json();
+    return { ok: res.ok, status: res.status, body };
   }
 
   async function loadBookings() {
-    allBookings = await apiFetch('/api/bookings') || [];
+    const result = await apiFetch('/api/bookings');
+    allBookings = (result && result.ok && Array.isArray(result.body)) ? result.body : [];
     updateStats();
     renderBookings();
   }
@@ -274,6 +291,47 @@
     return filtered;
   }
 
+  function datesOverlap(a, b) {
+    return a.check_in < b.check_out && a.check_out > b.check_in;
+  }
+
+  function countCollisions(target, all) {
+    if (target.payment_status !== 'pending') return 0;
+    return all.filter(b =>
+      b.id !== target.id &&
+      b.payment_status === 'pending' &&
+      datesOverlap(target, b)
+    ).length;
+  }
+
+  // Derive expiry from created_at + proof state:
+  //   - No proof yet: 30 min from creation
+  //   - Proof uploaded: up to 24h 30m from creation
+  function computeExpiry(booking) {
+    if (!booking.created_at) return null;
+    const createdMs = new Date(booking.created_at).getTime();
+    const hasProof = !!booking.payment_proof_url;
+    const ttlMs = hasProof ? (24 * 60 + 30) * 60 * 1000 : 30 * 60 * 1000;
+    return createdMs + ttlMs;
+  }
+
+  function formatExpires(booking) {
+    const expiryMs = computeExpiry(booking);
+    if (!expiryMs) return null;
+    const diffMs = expiryMs - Date.now();
+    if (diffMs <= 0) return { text: 'Expired', expired: true };
+    const mins = Math.floor(diffMs / 60000);
+    const hrs = Math.floor(mins / 60);
+    if (hrs >= 1) return { text: `Expires in ${hrs}h ${mins % 60}m`, expired: false };
+    return { text: `Expires in ${mins}m`, expired: false };
+  }
+
+  // Reference number derived from booking id (first 8 chars, uppercased)
+  function referenceFor(booking) {
+    if (!booking.id) return null;
+    return 'CP-' + String(booking.id).replace(/-/g, '').slice(0, 8).toUpperCase();
+  }
+
   function renderBookings() {
     const list = document.getElementById('bookingsList');
     const filtered = getFiltered();
@@ -287,17 +345,31 @@
       const ciDate = formatDate(b.check_in);
       const coDate = formatDate(b.check_out);
       const nights = Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000);
+      const collisions = countCollisions(b, allBookings);
+      const expiresInfo = b.payment_status === 'pending' ? formatExpires(b) : null;
+      const ref = referenceFor(b);
+      const refTag = ref
+        ? `<div class="reference-tag">Ref: ${esc(ref)}</div>`
+        : '';
+      const expiresTag = expiresInfo
+        ? `<span class="expires-tag ${expiresInfo.expired ? 'expired' : ''}">⏱ ${expiresInfo.text}</span>`
+        : '';
+      const collisionBanner = collisions > 0
+        ? `<div class="collision-banner">⚠️ ${collisions} other pending booking${collisions !== 1 ? 's' : ''} for overlapping dates. First-to-pay wins.</div>`
+        : '';
       return `
         <div class="booking-card">
           <div class="bc-guest">
             <h3>${esc(b.guest_name)}</h3>
             <p>${esc(b.email)}</p>
             ${b.phone ? '<p>' + esc(b.phone) + '</p>' : ''}
+            ${refTag}
           </div>
           <div class="bc-dates">
             <div class="date-row"><div class="label">Check-in</div><div class="value">${ciDate}</div></div>
             <div class="date-row"><div class="label">Check-out</div><div class="value">${coDate}</div></div>
             <div style="font-size:0.75rem;color:var(--text-light);">${nights} night${nights !== 1 ? 's' : ''} · ${esc(b.room_type)}</div>
+            ${expiresTag}
           </div>
           <div class="bc-status">
             <span class="badge ${b.payment_status}">${b.payment_status}</span>
@@ -310,6 +382,7 @@
             ${b.payment_proof_url ? `<button class="action-btn view-proof" onclick="viewProof('${esc(b.payment_proof_url)}')" style="background:#d1fae5;color:#065f46;">View Receipt</button>` : `<span class="action-btn" style="background:#f3f4f6;color:#6b7280;cursor:default;">Awaiting Receipt</span>`}
             <button class="action-btn delete" onclick="showDeleteModal('${b.id}','${esc(b.guest_name)}')">Delete</button>
           </div>
+          ${collisionBanner}
         </div>`;
     }).join('');
   }
@@ -337,10 +410,22 @@
   }
 
   async function updateStatus(id, status) {
-    await apiFetch('/api/bookings', {
+    const result = await apiFetch('/api/bookings', {
       method: 'PATCH',
       body: JSON.stringify({ id, payment_status: status }),
     });
+    if (result && !result.ok) {
+      if (result.status === 409 && result.body && result.body.conflict) {
+        const c = result.body.conflict;
+        alert(
+          `Cannot mark paid — these dates are already booked by ${c.guest_name} ` +
+          `(${formatDate(c.check_in)} → ${formatDate(c.check_out)}).\n\n` +
+          `If this is a mistake, delete the conflicting booking first.`
+        );
+      } else {
+        alert((result.body && result.body.error) || 'Update failed. Please try again.');
+      }
+    }
     loadBookings();
   }
 
@@ -377,9 +462,9 @@
     content.innerHTML = '<p style="color:var(--text-light);">Loading receipt...</p>';
     document.getElementById('proofModal').classList.add('show');
     try {
-      const res = await apiFetch('/api/view-proof?url=' + encodeURIComponent(url));
-      if (res && res.url) {
-        content.innerHTML = `<img src="${res.url}" class="proof-img" alt="Payment proof"/>`;
+      const result = await apiFetch('/api/view-proof?url=' + encodeURIComponent(url));
+      if (result && result.ok && result.body && result.body.url) {
+        content.innerHTML = `<img src="${result.body.url}" class="proof-img" alt="Payment proof"/>`;
       } else {
         content.innerHTML = '<p style="color:#b91c1c;">Receipt not available. File may have been moved or deleted.</p>';
       }

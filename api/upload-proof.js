@@ -48,12 +48,16 @@ module.exports = async function handler(req, res) {
 
   const publicUrl = urlData.publicUrl;
 
-  // Update booking with proof URL — match by booking_id or email
+  // Update booking with proof URL — match by booking_id or email.
+  // Presence of payment_proof_url extends the effective expiration window
+  // (cleanup logic uses created_at + proof presence to decide).
+  const proofUpdate = { payment_proof_url: publicUrl };
+
   let updateError = null;
   if (booking_id && !booking_id.startsWith('payment-')) {
     const { error } = await supabase
       .from('bookings')
-      .update({ payment_proof_url: publicUrl })
+      .update(proofUpdate)
       .eq('id', booking_id);
     updateError = error;
   } else if (email) {
@@ -68,7 +72,7 @@ module.exports = async function handler(req, res) {
     if (bookings && bookings.length > 0) {
       const { error } = await supabase
         .from('bookings')
-        .update({ payment_proof_url: publicUrl })
+        .update(proofUpdate)
         .eq('id', bookings[0].id);
       updateError = error;
     }

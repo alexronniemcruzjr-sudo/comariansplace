@@ -11,10 +11,13 @@ module.exports = async function handler(req, res) {
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Get all confirmed bookings (not cancelled) with check_out >= today
+  // Only block dates for bookings that have actually been paid (partial or full).
+  // Pending bookings (no confirmed payment) do NOT block the calendar —
+  // first guest to pay wins the date.
   const { data, error } = await supabase
     .from('bookings')
     .select('check_in, check_out')
+    .in('payment_status', ['partial', 'paid'])
     .gte('check_out', today)
     .order('check_in', { ascending: true });
 
