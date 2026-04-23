@@ -1,5 +1,10 @@
 const { createClient } = require('@supabase/supabase-js');
 const { runCleanup } = require('./cleanup');
+const {
+  notifyOwnerNewInquiry,
+  notifyGuestConfirmed,
+  notifyLoser,
+} = require('./_email');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -60,6 +65,10 @@ module.exports = async function handler(req, res) {
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
+
+    // Fire-and-forget owner notification — never blocks response
+    notifyOwnerNewInquiry(data).catch(() => {});
+
     return res.status(201).json(data);
   }
 
@@ -142,14 +151,22 @@ module.exports = async function handler(req, res) {
     if (error) return res.status(500).json({ error: error.message });
 
     // After locking, delete other pending bookings that overlap these dates (losers)
+    // and email them so they know.
     if (isLockingPayment && data) {
-      await supabase
+      const { data: losers } = await supabase
         .from('bookings')
         .delete()
         .eq('payment_status', 'pending')
         .neq('id', id)
         .lt('check_in', data.check_out)
-        .gt('check_out', data.check_in);
+        .gt('check_out', data.check_in)
+        .select('id, guest_name, email, check_in, check_out');
+
+      // Fire-and-forget loser notifications
+      (losers || []).forEach((l) => notifyLoser(l).catch(() => {}));
+
+      // Fire-and-forget confirmation to the winner (guest)
+      notifyGuestConfirmed(data).catch(() => {});
     }
 
     return res.status(200).json(data);

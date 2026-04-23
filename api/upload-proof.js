@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { notifyOwnerProofUploaded } = require('./_email');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -53,13 +54,15 @@ module.exports = async function handler(req, res) {
   // (cleanup logic uses created_at + proof presence to decide).
   const proofUpdate = { payment_proof_url: publicUrl };
 
-  let updateError = null;
+  let updatedBooking = null;
   if (booking_id && !booking_id.startsWith('payment-')) {
-    const { error } = await supabase
+    const { data: updated } = await supabase
       .from('bookings')
       .update(proofUpdate)
-      .eq('id', booking_id);
-    updateError = error;
+      .eq('id', booking_id)
+      .select()
+      .single();
+    updatedBooking = updated;
   } else if (email) {
     // Match most recent booking by email
     const { data: bookings } = await supabase
@@ -70,12 +73,19 @@ module.exports = async function handler(req, res) {
       .limit(1);
 
     if (bookings && bookings.length > 0) {
-      const { error } = await supabase
+      const { data: updated } = await supabase
         .from('bookings')
         .update(proofUpdate)
-        .eq('id', bookings[0].id);
-      updateError = error;
+        .eq('id', bookings[0].id)
+        .select()
+        .single();
+      updatedBooking = updated;
     }
+  }
+
+  // Fire-and-forget owner notification when proof is attached
+  if (updatedBooking) {
+    notifyOwnerProofUploaded(updatedBooking).catch(() => {});
   }
 
   return res.status(200).json({ url: publicUrl });
