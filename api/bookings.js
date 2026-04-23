@@ -66,8 +66,9 @@ module.exports = async function handler(req, res) {
 
     if (error) return res.status(500).json({ error: error.message });
 
-    // Fire-and-forget owner notification — never blocks response
-    notifyOwnerNewInquiry(data).catch(() => {});
+    // Await the email so it actually fires before Vercel reaps the function.
+    // ~300-800ms added latency is acceptable for booking submission.
+    try { await notifyOwnerNewInquiry(data); } catch (_) {}
 
     return res.status(201).json(data);
   }
@@ -162,11 +163,11 @@ module.exports = async function handler(req, res) {
         .gt('check_out', data.check_in)
         .select('id, guest_name, email, check_in, check_out');
 
-      // Fire-and-forget loser notifications
-      (losers || []).forEach((l) => notifyLoser(l).catch(() => {}));
-
-      // Fire-and-forget confirmation to the winner (guest)
-      notifyGuestConfirmed(data).catch(() => {});
+      // Await the emails so they actually fire before Vercel reaps the function.
+      try { await notifyGuestConfirmed(data); } catch (_) {}
+      for (const l of losers || []) {
+        try { await notifyLoser(l); } catch (_) {}
+      }
     }
 
     return res.status(200).json(data);

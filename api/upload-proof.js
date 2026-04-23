@@ -83,9 +83,9 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // Fire-and-forget owner notification when proof is attached
+  // Await the owner notification so it fires before Vercel reaps the function.
   if (updatedBooking) {
-    notifyOwnerProofUploaded(updatedBooking).catch(() => {});
+    try { await notifyOwnerProofUploaded(updatedBooking); } catch (_) {}
   }
 
   return res.status(200).json({ url: publicUrl });
