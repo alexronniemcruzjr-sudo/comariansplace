@@ -379,7 +379,7 @@
           <div class="bc-actions">
             ${b.payment_status !== 'paid' ? `<button class="action-btn mark-paid" onclick="updateStatus('${b.id}','paid')">Mark Paid</button>` : ''}
             ${b.payment_status === 'pending' ? `<button class="action-btn mark-partial" onclick="updateStatus('${b.id}','partial')">Mark Partial</button>` : ''}
-            ${b.payment_proof_url ? `<button class="action-btn view-proof" onclick="viewProof('${esc(b.payment_proof_url)}')" style="background:#d1fae5;color:#065f46;">View Receipt</button>` : `<span class="action-btn" style="background:#f3f4f6;color:#6b7280;cursor:default;">Awaiting Receipt</span>`}
+            ${b.payment_proof_url ? `<button class="action-btn view-proof" onclick="viewProof('${esc(b.payment_proof_url)}')" style="background:#d1fae5;color:#065f46;">View Receipt</button>` : `<button class="action-btn" onclick="adminUploadProof('${b.id}','${esc(b.email)}')" style="background:#dbeafe;color:#1e40af;">Upload Proof</button>`}
             <button class="action-btn delete" onclick="showDeleteModal('${b.id}','${esc(b.guest_name)}')">Delete</button>
           </div>
           ${collisionBanner}
@@ -477,6 +477,40 @@
     localStorage.removeItem('cp_token');
     localStorage.removeItem('cp_user');
     window.location.href = '/login.html';
+  }
+
+  // Admin-side proof upload for screenshots that arrived via Messenger.
+  // Reuses the public upload endpoint with an explicit booking_id so the
+  // proof is attached directly. Logs the uploader via notes.
+  function adminUploadProof(bookingId, email) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const res = await fetch('/api/upload-proof', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              booking_id: bookingId,
+              image_data: e.target.result,
+              file_name: file.name,
+              email: email,
+            }),
+          });
+          if (!res.ok) throw new Error('Upload failed');
+          loadBookings();
+        } catch (err) {
+          alert('Upload failed: ' + err.message);
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
   }
 
   // Load on page ready

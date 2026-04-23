@@ -1070,16 +1070,9 @@
           <span class="date-error" id="coError">Check-out must be after check-in.</span>
         </div>
         <div class="form-group">
-          <label>Room Type</label>
-          <select id="roomType">
-            <option value="">Select Package</option>
-            <option value="Villa - Mon to Thu (Peak)|11500">Peak: Mon–Thu — ₱11,500</option>
-            <option value="Villa - Fri & Sun (Peak)|12500">Peak: Fri & Sun — ₱12,500</option>
-            <option value="Villa - Sat & Holidays (Peak)|15000">Peak: Sat & Holidays — ₱15,000</option>
-            <option value="Villa - Mon to Thu (Off-Peak)|10500">Off-Peak: Mon–Thu — ₱10,500</option>
-            <option value="Villa - Fri & Sun (Off-Peak)|11500">Off-Peak: Fri & Sun — ₱11,500</option>
-            <option value="Villa - Saturday (Off-Peak)|13500">Off-Peak: Saturday — ₱13,500</option>
-          </select>
+          <label>Package (auto-computed from dates)</label>
+          <div id="packageDisplay" style="padding:12px 14px;border:1.5px solid var(--sand-dark);border-radius:8px;background:var(--sand);font-size:0.88rem;color:var(--text-light);min-height:44px;display:flex;align-items:center;">Pick your dates to see the package and rate</div>
+          <input type="hidden" id="roomType" value=""/>
         </div>
         <div class="form-group">
           <label>Number of Guests</label>
@@ -1419,30 +1412,129 @@
     if (!e.target.closest('.dp-wrap')) closeAllDP();
   });
 
+  // Philippine regular + special non-working holidays (2026–2028).
+  // Months April, May, November, December are peak full-month regardless.
+  // Any date listed here is also peak (max rate applied when holiday).
+  const PH_HOLIDAYS = new Set([
+    // 2026
+    '2026-01-01','2026-02-17','2026-02-25','2026-04-02','2026-04-03','2026-04-09',
+    '2026-05-01','2026-06-12','2026-08-21','2026-08-31',
+    '2026-11-01','2026-11-02','2026-11-30','2026-12-08','2026-12-24','2026-12-25','2026-12-30','2026-12-31',
+    // 2027
+    '2027-01-01','2027-02-06','2027-02-25','2027-03-25','2027-03-26','2027-04-09',
+    '2027-05-01','2027-06-12','2027-08-21','2027-08-30',
+    '2027-11-01','2027-11-02','2027-11-30','2027-12-08','2027-12-24','2027-12-25','2027-12-30','2027-12-31',
+    // 2028
+    '2028-01-01','2028-01-26','2028-02-25','2028-04-13','2028-04-14','2028-04-09',
+    '2028-05-01','2028-06-12','2028-08-21','2028-08-28',
+    '2028-11-01','2028-11-02','2028-11-30','2028-12-08','2028-12-25','2028-12-30','2028-12-31',
+  ]);
+
+  const PEAK_MONTHS = new Set([4, 5, 11, 12]);
+  const DOW_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  function computeNightRate(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const month = d.getMonth() + 1;
+    const dow = d.getDay(); // 0 Sun .. 6 Sat
+    const isHoliday = PH_HOLIDAYS.has(dateStr);
+    const isPeak = PEAK_MONTHS.has(month) || isHoliday;
+
+    let label, price;
+    if (isPeak) {
+      if (dow === 6 || isHoliday) { label = isHoliday ? 'Peak: Holiday' : 'Peak: Saturday'; price = 15000; }
+      else if (dow === 5 || dow === 0) { label = 'Peak: Fri/Sun'; price = 12500; }
+      else { label = 'Peak: Mon-Thu'; price = 11500; }
+    } else {
+      if (dow === 6) { label = 'Off-Peak: Saturday'; price = 13500; }
+      else if (dow === 5 || dow === 0) { label = 'Off-Peak: Fri/Sun'; price = 11500; }
+      else { label = 'Off-Peak: Mon-Thu'; price = 10500; }
+    }
+    return { label, price };
+  }
+
+  function toLocalISODate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function computeStay(checkIn, checkOut) {
+    const start = new Date(checkIn + 'T00:00:00');
+    const end = new Date(checkOut + 'T00:00:00');
+    const nights = [];
+    const cursor = new Date(start);
+    while (cursor < end) {
+      const iso = toLocalISODate(cursor);
+      const { label, price } = computeNightRate(iso);
+      nights.push({ date: iso, dow: DOW_NAMES[cursor.getDay()], label, price });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    const total = nights.reduce((s, n) => s + n.price, 0);
+    return { nights, total };
+  }
+
+  function renderPackageDisplay(checkIn, checkOut) {
+    const disp = document.getElementById('packageDisplay');
+    const hidden = document.getElementById('roomType');
+    if (!checkIn || !checkOut) {
+      disp.textContent = 'Pick your dates to see the package and rate';
+      disp.style.color = 'var(--text-light)';
+      hidden.value = '';
+      return null;
+    }
+    const { nights, total } = computeStay(checkIn, checkOut);
+    if (nights.length === 0) {
+      disp.textContent = 'Pick valid check-out date';
+      disp.style.color = 'var(--text-light)';
+      hidden.value = '';
+      return null;
+    }
+    const uniqueLabels = [...new Set(nights.map(n => n.label))];
+    const allSame = uniqueLabels.length === 1;
+
+    if (allSame) {
+      disp.innerHTML = `<div style="display:flex;flex-direction:column;gap:2px;"><strong style="color:var(--earth-dark);">${uniqueLabels[0]}</strong><span style="font-size:0.78rem;color:var(--text-light);">${nights.length} night${nights.length !== 1 ? 's' : ''} × ₱${nights[0].price.toLocaleString()}</span></div>`;
+    } else {
+      const rows = nights.map(n =>
+        `<div style="display:flex;justify-content:space-between;gap:12px;font-size:0.78rem;"><span>${n.dow} ${n.date} — ${n.label}</span><span style="font-weight:600;">₱${n.price.toLocaleString()}</span></div>`
+      ).join('');
+      disp.innerHTML = `<div style="display:flex;flex-direction:column;gap:4px;width:100%;"><strong style="color:var(--earth-dark);font-size:0.82rem;">Mixed rates (${nights.length} nights)</strong>${rows}</div>`;
+    }
+    disp.style.color = 'var(--text)';
+    disp.style.alignItems = 'flex-start';
+    disp.style.paddingTop = '10px';
+    disp.style.paddingBottom = '10px';
+
+    const roomName = allSame ? `Villa - ${uniqueLabels[0]}` : `Villa - Mixed (${nights.length} nights)`;
+    hidden.value = `${roomName}|${total}`;
+    return { total, roomName, nights };
+  }
+
   function updateSummary() {
     const ciVal = checkInEl.value;
     const coVal = checkOutEl.value;
-    const roomVal = document.getElementById('roomType').value;
 
-    if (!ciVal || !coVal) { hideSummary(); return; }
+    if (!ciVal || !coVal) { renderPackageDisplay(null, null); hideSummary(); return; }
 
     const ciDate = new Date(ciVal + 'T00:00:00');
     const coDate = new Date(coVal + 'T00:00:00');
     const nights = Math.round((coDate - ciDate) / (1000*60*60*24));
 
-    if (nights <= 0) { hideSummary(); return; }
+    if (nights <= 0) { renderPackageDisplay(null, null); hideSummary(); return; }
+
+    const stay = renderPackageDisplay(ciVal, coVal);
 
     document.getElementById('sumCheckOut').textContent = formatDate(coVal);
     document.getElementById('sumCheckIn').textContent  = formatDate(ciVal);
     document.getElementById('sumNights').textContent   = nights + (nights === 1 ? ' night' : ' nights');
 
-    if (roomVal) {
-      const [name, price] = roomVal.split('|');
-      const total = parseInt(price) * nights;
-      document.getElementById('sumRoom').textContent  = name;
-      document.getElementById('sumTotal').textContent = '₱' + total.toLocaleString();
+    if (stay) {
+      document.getElementById('sumRoom').textContent  = stay.roomName;
+      document.getElementById('sumTotal').textContent = '₱' + stay.total.toLocaleString();
     } else {
-      document.getElementById('sumRoom').textContent  = 'Not selected';
+      document.getElementById('sumRoom').textContent  = '—';
       document.getElementById('sumTotal').textContent = '—';
     }
 
@@ -1458,8 +1550,6 @@
     return d.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
   }
 
-  document.getElementById('roomType').addEventListener('change', updateSummary);
-
   async function submitBooking() {
     const ciVal = checkInEl.value;
     const coVal = checkOutEl.value;
@@ -1474,7 +1564,7 @@
     if (!guestEmail) { alert('Please enter your email.'); valid = false; }
     if (!ciVal) { ciError.style.display = 'block'; valid = false; }
     if (!coVal) { coError.style.display = 'block'; valid = false; }
-    if (!roomVal) { alert('Please select a room type.'); valid = false; }
+    if (!roomVal) { alert('Please pick your dates first so we can compute the package.'); valid = false; }
     if (ciVal && coVal && hasBlockedDateInRange(ciVal, coVal)) {
       alert('Your selected dates overlap with an existing booking. Please choose different dates.');
       valid = false;
@@ -1514,14 +1604,19 @@
       const dpAmount = Math.round(totalPrice * 0.5);
       const payUrl = '/pay.html?name=' + encodeURIComponent(guestName) + '&email=' + encodeURIComponent(guestEmail) + '&phone=' + encodeURIComponent(guestPhone) + '&amount=' + dpAmount;
 
-      document.getElementById('modalTitle').textContent = '🎉 Reservation Received!';
+      document.getElementById('modalTitle').textContent = '🎉 Inquiry Received — Secure Your Date';
       document.getElementById('modalMsg').innerHTML =
-        'Thank you, ' + guestName + '! Your reservation for ' + formatDate(ciVal) + ' to ' + formatDate(coVal) +
+        'Thank you, ' + guestName + '! Your inquiry for ' + formatDate(ciVal) + ' to ' + formatDate(coVal) +
         ' (<strong>₱' + totalPrice.toLocaleString() + '</strong>) has been received.<br/><br/>' +
-        'To secure your booking, please pay the <strong>50% downpayment (₱' + dpAmount.toLocaleString() + ')</strong>.' +
-        '<br/><br/><div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px;font-size:0.78rem;color:#92400e;line-height:1.6;text-align:left;margin-bottom:16px;">' +
-        '<strong>Reminder:</strong> The remaining 50% + ₱3,000 security deposit must be settled via online transaction <strong>1–2 days before check-in</strong>. No payments accepted on the day of staycation.</div>' +
-        '<a href="' + payUrl + '" style="display:inline-block;background:#3d5a3e;color:#fdfaf5;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:500;font-size:0.9rem;">Pay Now</a>';
+        '<div style="background:#fee2e2;border:2px solid #dc2626;border-radius:8px;padding:14px;font-size:0.85rem;color:#991b1b;line-height:1.6;text-align:left;margin-bottom:16px;font-weight:500;">' +
+        '⏰ <strong>First-come-first-serve:</strong> your date is NOT reserved until the 50% downpayment is paid and proof is uploaded on this website. Another guest who pays first may secure your date.</div>' +
+        '<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:12px;font-size:0.78rem;color:#92400e;line-height:1.6;text-align:left;margin-bottom:16px;">' +
+        '<strong>Action needed within 30 minutes:</strong><br/>' +
+        '1️⃣ Scan the GCash/Metrobank QR on the next page<br/>' +
+        '2️⃣ Pay ₱' + dpAmount.toLocaleString() + ' (50% downpayment)<br/>' +
+        '3️⃣ <strong>Upload your screenshot HERE on the website</strong> (not via Messenger) to secure your booking</div>' +
+        '<div style="font-size:0.75rem;color:var(--text-light);margin-bottom:14px;line-height:1.5;">Remaining 50% + ₱3,000 security deposit due <strong>1–2 days before check-in</strong>. No payments on the day of stay.</div>' +
+        '<a href="' + payUrl + '" style="display:inline-block;background:#3d5a3e;color:#fdfaf5;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:1rem;">Pay Now & Upload Proof →</a>';
       document.getElementById('modalOverlay').classList.add('show');
 
       // Reset form
