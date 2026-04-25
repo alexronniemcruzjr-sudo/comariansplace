@@ -209,32 +209,39 @@
 
 <!-- BLOCK DATE MODAL -->
 <div class="modal-overlay" id="blockDateModal">
-  <div class="modal">
-    <h3>Block Date Manually</h3>
-    <p>For bookings already paid via Messenger or offline. Creates a paid booking instantly so the date blocks on the public calendar.</p>
-    <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
-      <div>
-        <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Guest name</label>
-        <input type="text" id="blockGuestName" placeholder="e.g. Celia" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
-      </div>
-      <div style="display:flex;gap:12px;">
-        <div style="flex:1;">
-          <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Check-in</label>
-          <input type="date" id="blockCheckIn" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+  <div class="modal" style="max-width:640px;">
+    <h3>Block Date</h3>
+    <p>Pick a pending inquiry below to confirm payment and lock the date. Or add a manual block at the bottom for guests who paid offline.</p>
+
+    <div id="pendingList" style="max-height:300px;overflow-y:auto;margin-top:16px;border:1px solid var(--sand-dark);border-radius:8px;background:var(--sand);padding:8px;"></div>
+
+    <details style="margin-top:16px;">
+      <summary style="cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--earth-dark);padding:8px 0;">+ Manual block (guest paid via Messenger / offline)</summary>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;padding:12px;background:var(--sand);border-radius:8px;">
+        <div>
+          <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Guest name</label>
+          <input type="text" id="blockGuestName" placeholder="e.g. Celia" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
         </div>
-        <div style="flex:1;">
-          <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Check-out</label>
-          <input type="date" id="blockCheckOut" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+        <div style="display:flex;gap:12px;">
+          <div style="flex:1;">
+            <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Check-in</label>
+            <input type="date" id="blockCheckIn" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Check-out</label>
+            <input type="date" id="blockCheckOut" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+          </div>
         </div>
+        <div>
+          <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Note (optional)</label>
+          <input type="text" id="blockNote" placeholder="e.g. paid via GCash, screenshot in Messenger" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+        </div>
+        <button class="modal-btn confirm" onclick="submitBlockDate()" style="background:var(--green);color:var(--white);align-self:flex-end;">Block Manually</button>
       </div>
-      <div>
-        <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Note (optional)</label>
-        <input type="text" id="blockNote" placeholder="e.g. paid via GCash, screenshot in Messenger" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
-      </div>
-    </div>
+    </details>
+
     <div class="modal-actions">
-      <button class="modal-btn cancel" onclick="document.getElementById('blockDateModal').classList.remove('show')">Cancel</button>
-      <button class="modal-btn confirm" onclick="submitBlockDate()" style="background:var(--green);color:var(--white);">Block Date</button>
+      <button class="modal-btn cancel" onclick="document.getElementById('blockDateModal').classList.remove('show')">Close</button>
     </div>
   </div>
 </div>
@@ -512,13 +519,55 @@
     window.location.href = '/login.html';
   }
 
-  // Open the manual block-date modal
+  // Open the block-date modal — shows pending inquiries to pick from
   function openBlockDateModal() {
     document.getElementById('blockGuestName').value = '';
     document.getElementById('blockCheckIn').value = '';
     document.getElementById('blockCheckOut').value = '';
     document.getElementById('blockNote').value = '';
+    renderPendingList();
     document.getElementById('blockDateModal').classList.add('show');
+  }
+
+  function renderPendingList() {
+    const list = document.getElementById('pendingList');
+    const today = new Date().toISOString().split('T')[0];
+    const pending = allBookings.filter(b => b.payment_status === 'pending' && b.check_in >= today);
+    if (pending.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:24px 12px;color:var(--text-light);font-size:0.85rem;">No pending inquiries. Use Manual Block below for offline-paid guests.</div>';
+      return;
+    }
+    list.innerHTML = pending.map(b => {
+      const ci = formatDate(b.check_in);
+      const co = formatDate(b.check_out);
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--white);border-radius:6px;margin-bottom:6px;">
+          <div style="flex:1;">
+            <div style="font-weight:600;color:var(--earth-dark);font-size:0.92rem;">${esc(b.guest_name)}</div>
+            <div style="font-size:0.78rem;color:var(--text-light);">${ci} → ${co} · ${b.guests} guest${b.guests !== 1 ? 's' : ''}</div>
+            ${b.payment_proof_url ? '<div style="font-size:0.72rem;color:#065f46;margin-top:2px;">✓ Proof uploaded</div>' : '<div style="font-size:0.72rem;color:#92400e;margin-top:2px;">⏱ Awaiting proof</div>'}
+          </div>
+          <button class="action-btn mark-paid" onclick="confirmAndBlock('${b.id}')" style="background:var(--green);color:var(--white);font-size:0.78rem;">Confirm & Block</button>
+        </div>`;
+    }).join('');
+  }
+
+  async function confirmAndBlock(id) {
+    const result = await apiFetch('/api/bookings', {
+      method: 'PATCH',
+      body: JSON.stringify({ id, payment_status: 'paid' }),
+    });
+    if (result && !result.ok) {
+      if (result.status === 409 && result.body && result.body.conflict) {
+        const c = result.body.conflict;
+        alert(`Cannot confirm — these dates are already booked by ${c.guest_name}.`);
+      } else {
+        alert((result.body && result.body.error) || 'Could not confirm booking.');
+      }
+      return;
+    }
+    document.getElementById('blockDateModal').classList.remove('show');
+    loadBookings();
   }
 
   // Submit a manual block: creates a placeholder booking already marked paid
