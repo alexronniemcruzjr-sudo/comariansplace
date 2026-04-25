@@ -10,10 +10,7 @@ const SITE_URL = process.env.SITE_URL || 'https://comarians-place.vercel.app';
 
 async function sendMail({ to, toName, subject, html }) {
   const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey || !to) {
-    console.log('[email] SKIPPED — apiKey?', !!apiKey, 'to?', !!to);
-    return { skipped: true };
-  }
+  if (!apiKey || !to) return { skipped: true };
   try {
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
@@ -29,11 +26,8 @@ async function sendMail({ to, toName, subject, html }) {
         htmlContent: html,
       }),
     });
-    const body = await res.text();
-    console.log('[email] →', res.status, subject, body.slice(0, 200));
     return { ok: res.ok, status: res.status };
   } catch (err) {
-    console.log('[email] ERROR', err.message, err.stack);
     return { error: err.message };
   }
 }
@@ -71,6 +65,7 @@ const wrapHtml = (body) => `
 
 async function notifyOwnerNewInquiry(booking) {
   const ref = referenceFor(booking);
+  const dp = Math.round((booking.total_price || 0) * 0.5);
   const html = wrapHtml(`
     <h3 style="margin-top:0;">New booking inquiry</h3>
     <p><strong>${booking.guest_name}</strong> (${booking.email}${booking.phone ? ', ' + booking.phone : ''}) just submitted an inquiry.</p>
@@ -80,10 +75,11 @@ async function notifyOwnerNewInquiry(booking) {
       <tr><td style="padding:6px 0;color:#6b5a45;">Check-out</td><td style="padding:6px 0;text-align:right;">${formatDate(booking.check_out)}</td></tr>
       <tr><td style="padding:6px 0;color:#6b5a45;">Guests</td><td style="padding:6px 0;text-align:right;">${booking.guests || 1}</td></tr>
       <tr><td style="padding:6px 0;color:#6b5a45;">Package</td><td style="padding:6px 0;text-align:right;">${booking.room_type}</td></tr>
-      <tr><td style="padding:6px 0;color:#6b5a45;">Total</td><td style="padding:6px 0;text-align:right;font-weight:600;">${peso(booking.total_price)}</td></tr>
+      <tr><td style="padding:6px 0;color:#6b5a45;">Total stay</td><td style="padding:6px 0;text-align:right;">${peso(booking.total_price)}</td></tr>
+      <tr><td style="padding:6px 0;color:#3d5a3e;font-weight:600;">Expected DP (50%)</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#3d5a3e;font-size:16px;">${peso(dp)}</td></tr>
     </table>
     <p style="font-size:13px;color:#92400e;background:#fef3c7;padding:10px 12px;border-radius:6px;">
-      ⏰ The guest has 30 minutes to pay the 50% down payment and upload their proof. If no proof arrives, the inquiry auto-expires and the date stays open.
+      ⏰ The guest has 30 minutes to pay the <strong>${peso(dp)} downpayment</strong> and upload their proof. If no proof arrives, the inquiry auto-expires and the date stays open.
     </p>
     <p style="text-align:center;margin-top:20px;">
       <a href="${SITE_URL}/admin.html" style="background:#3d5a3e;color:#fff;padding:10px 22px;text-decoration:none;border-radius:6px;font-size:14px;">Open Admin Panel</a>
@@ -92,20 +88,22 @@ async function notifyOwnerNewInquiry(booking) {
   return sendMail({
     to: OWNER_EMAIL,
     toName: OWNER_NAME,
-    subject: `New inquiry: ${booking.guest_name} — ${formatDate(booking.check_in)}`,
+    subject: `New inquiry: ${booking.guest_name} — DP ${peso(dp)} — ${formatDate(booking.check_in)}`,
     html,
   });
 }
 
 async function notifyOwnerProofUploaded(booking) {
   const ref = referenceFor(booking);
+  const dp = Math.round((booking.total_price || 0) * 0.5);
   const html = wrapHtml(`
     <h3 style="margin-top:0;">Payment proof uploaded</h3>
-    <p><strong>${booking.guest_name}</strong> uploaded their downpayment proof. Please verify and tap <strong>Mark Paid</strong> in the admin panel to lock the date.</p>
+    <p><strong>${booking.guest_name}</strong> uploaded their downpayment proof. Please verify the screenshot shows <strong>at least ${peso(dp)}</strong> and tap <strong>Mark Paid</strong> in the admin panel to lock the date.</p>
     <table style="width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;">
       <tr><td style="padding:6px 0;color:#6b5a45;">Reference</td><td style="padding:6px 0;text-align:right;font-family:monospace;">${ref}</td></tr>
       <tr><td style="padding:6px 0;color:#6b5a45;">Dates</td><td style="padding:6px 0;text-align:right;">${formatDate(booking.check_in)} → ${formatDate(booking.check_out)}</td></tr>
-      <tr><td style="padding:6px 0;color:#6b5a45;">Total</td><td style="padding:6px 0;text-align:right;font-weight:600;">${peso(booking.total_price)}</td></tr>
+      <tr><td style="padding:6px 0;color:#6b5a45;">Total stay</td><td style="padding:6px 0;text-align:right;">${peso(booking.total_price)}</td></tr>
+      <tr><td style="padding:6px 0;color:#3d5a3e;font-weight:600;">Expected DP (50%)</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#3d5a3e;font-size:16px;">${peso(dp)}</td></tr>
     </table>
     <p style="text-align:center;margin-top:20px;">
       <a href="${SITE_URL}/admin.html" style="background:#3d5a3e;color:#fff;padding:10px 22px;text-decoration:none;border-radius:6px;font-size:14px;">Review in Admin</a>
@@ -114,13 +112,15 @@ async function notifyOwnerProofUploaded(booking) {
   return sendMail({
     to: OWNER_EMAIL,
     toName: OWNER_NAME,
-    subject: `Proof uploaded: ${booking.guest_name} — ${formatDate(booking.check_in)}`,
+    subject: `Proof uploaded: ${booking.guest_name} — DP ${peso(dp)} — ${formatDate(booking.check_in)}`,
     html,
   });
 }
 
 async function notifyGuestConfirmed(booking) {
   const ref = referenceFor(booking);
+  const dp = Math.round((booking.total_price || 0) * 0.5);
+  const balance = (booking.total_price || 0) - dp;
   const html = wrapHtml(`
     <h3 style="margin-top:0;">🎉 Booking confirmed!</h3>
     <p>Hi <strong>${booking.guest_name}</strong>, your downpayment has been confirmed. Your date is locked in.</p>
@@ -129,10 +129,12 @@ async function notifyGuestConfirmed(booking) {
       <tr><td style="padding:6px 0;color:#6b5a45;">Check-in</td><td style="padding:6px 0;text-align:right;">${formatDate(booking.check_in)}</td></tr>
       <tr><td style="padding:6px 0;color:#6b5a45;">Check-out</td><td style="padding:6px 0;text-align:right;">${formatDate(booking.check_out)}</td></tr>
       <tr><td style="padding:6px 0;color:#6b5a45;">Package</td><td style="padding:6px 0;text-align:right;">${booking.room_type}</td></tr>
-      <tr><td style="padding:6px 0;color:#6b5a45;">Total</td><td style="padding:6px 0;text-align:right;font-weight:600;">${peso(booking.total_price)}</td></tr>
+      <tr><td style="padding:6px 0;color:#6b5a45;">Total stay</td><td style="padding:6px 0;text-align:right;">${peso(booking.total_price)}</td></tr>
+      <tr><td style="padding:6px 0;color:#065f46;font-weight:600;">Downpayment paid</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#065f46;">${peso(dp)} ✓</td></tr>
+      <tr><td style="padding:6px 0;color:#92400e;font-weight:600;">Remaining balance</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#92400e;">${peso(balance)}</td></tr>
     </table>
     <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:10px 12px;font-size:13px;color:#92400e;margin:12px 0;">
-      <strong>Reminder:</strong> The remaining 50% + ₱3,000 security deposit must be settled online <strong>1–2 days before check-in</strong>.
+      <strong>Reminder:</strong> The remaining ${peso(balance)} + ₱3,000 security deposit must be settled online <strong>1–2 days before check-in</strong>.
     </div>
     <p>For on-site questions, contact our caretaker <strong>Edgar Sembrano at 0915-302-4203</strong>.</p>
     <p>Thank you and we can't wait to welcome you!</p>
