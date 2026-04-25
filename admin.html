@@ -203,7 +203,40 @@
   <button class="filter-btn" onclick="setFilter('pending',this)">Pending</button>
   <button class="filter-btn" onclick="setFilter('partial',this)">Partial</button>
   <button class="filter-btn" onclick="setFilter('paid',this)">Paid</button>
+  <button class="filter-btn" onclick="openBlockDateModal()" style="background:#3d5a3e;color:#fdfaf5;border-color:#3d5a3e;font-weight:600;">+ Block Date</button>
   <input type="text" class="search-input" placeholder="Search guest name..." oninput="searchBookings(this.value)"/>
+</div>
+
+<!-- BLOCK DATE MODAL -->
+<div class="modal-overlay" id="blockDateModal">
+  <div class="modal">
+    <h3>Block Date Manually</h3>
+    <p>For bookings already paid via Messenger or offline. Creates a paid booking instantly so the date blocks on the public calendar.</p>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+      <div>
+        <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Guest name</label>
+        <input type="text" id="blockGuestName" placeholder="e.g. Celia" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div style="flex:1;">
+          <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Check-in</label>
+          <input type="date" id="blockCheckIn" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Check-out</label>
+          <input type="date" id="blockCheckOut" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Note (optional)</label>
+        <input type="text" id="blockNote" placeholder="e.g. paid via GCash, screenshot in Messenger" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="document.getElementById('blockDateModal').classList.remove('show')">Cancel</button>
+      <button class="modal-btn confirm" onclick="submitBlockDate()" style="background:var(--green);color:var(--white);">Block Date</button>
+    </div>
+  </div>
 </div>
 
 <!-- BOOKINGS LIST -->
@@ -477,6 +510,47 @@
     localStorage.removeItem('cp_token');
     localStorage.removeItem('cp_user');
     window.location.href = '/login.html';
+  }
+
+  // Open the manual block-date modal
+  function openBlockDateModal() {
+    document.getElementById('blockGuestName').value = '';
+    document.getElementById('blockCheckIn').value = '';
+    document.getElementById('blockCheckOut').value = '';
+    document.getElementById('blockNote').value = '';
+    document.getElementById('blockDateModal').classList.add('show');
+  }
+
+  // Submit a manual block: creates a placeholder booking already marked paid
+  // so the date instantly blocks on the public calendar.
+  async function submitBlockDate() {
+    const name = document.getElementById('blockGuestName').value.trim();
+    const ci = document.getElementById('blockCheckIn').value;
+    const co = document.getElementById('blockCheckOut').value;
+    const note = document.getElementById('blockNote').value.trim();
+    if (!name) return alert('Guest name is required.');
+    if (!ci || !co) return alert('Check-in and check-out dates are required.');
+    if (co <= ci) return alert('Check-out must be after check-in.');
+
+    const btn = document.querySelector('#blockDateModal .modal-btn.confirm');
+    btn.disabled = true;
+    btn.textContent = 'Blocking...';
+    try {
+      const result = await apiFetch('/api/admin-block-date', {
+        method: 'POST',
+        body: JSON.stringify({ guest_name: name, check_in: ci, check_out: co, note }),
+      });
+      if (!result || !result.ok) {
+        alert((result && result.body && result.body.error) || 'Could not block date.');
+      } else {
+        document.getElementById('blockDateModal').classList.remove('show');
+        loadBookings();
+      }
+    } catch (err) {
+      alert('Block failed: ' + err.message);
+    }
+    btn.disabled = false;
+    btn.textContent = 'Block Date';
   }
 
   // Admin-side proof upload for screenshots that arrived via Messenger.
