@@ -1553,6 +1553,10 @@
   }
 
   async function submitBooking() {
+    // Guard against double-tap before async disable lands (server also dedupes)
+    const earlyBtn = document.getElementById('bookBtn');
+    if (earlyBtn.disabled) return;
+
     const ciVal = checkInEl.value;
     const coVal = checkOutEl.value;
     const roomVal = document.getElementById('roomType').value;

@@ -11,17 +11,32 @@ module.exports = async function handler(req, res) {
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Only block dates for bookings that have actually been paid (partial or full).
-  // Pending bookings (no confirmed payment) do NOT block the calendar —
-  // first guest to pay wins the date.
-  const { data, error } = await supabase
-    .from('bookings')
-    .select('check_in, check_out')
-    .in('payment_status', ['partial', 'paid'])
-    .gte('check_out', today)
-    .order('check_in', { ascending: true });
+  // Block dates for:
+  //   1. Confirmed bookings — payment_status in (partial, paid)
+  //   2. Pending bookings WITH proof uploaded — provisional lock until owner
+  //      verifies in admin. Cleanup auto-removes after 24h30m if owner ignores.
+  // Pending without proof still does NOT block — first to upload proof wins.
+  // (Rule changed 2026-05 — old comment said "first to pay wins"; updated because
+  // owner can't verify within minutes of upload, so legit paid guests were seeing
+  // their dates listed as available and overlapping inquiries kept rolling in.)
+  const [{ data: confirmed, error: e1 }, { data: pendingWithProof, error: e2 }] =
+    await Promise.all([
+      supabase
+        .from('bookings')
+        .select('check_in, check_out')
+        .in('payment_status', ['partial', 'paid'])
+        .gte('check_out', today),
+      supabase
+        .from('bookings')
+        .select('check_in, check_out')
+        .eq('payment_status', 'pending')
+        .not('payment_proof_url', 'is', null)
+        .gte('check_out', today),
+    ]);
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (e1 || e2) return res.status(500).json({ error: (e1 || e2).message });
+
+  const data = [...(confirmed || []), ...(pendingWithProof || [])];
 
   // Build array of all blocked dates (each day between check_in and check_out - 1)
   const blocked = [];

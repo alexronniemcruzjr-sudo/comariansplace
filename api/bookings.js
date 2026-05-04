@@ -49,6 +49,25 @@ module.exports = async function handler(req, res) {
 
     await safeCleanup();
 
+    // Dedupe accidental double-submits (mobile double-tap, retry click, etc.):
+    // if same guest+dates was submitted in the last 2 min and is still pending,
+    // return that record instead of creating a duplicate. No extra owner email.
+    const dedupeWindow = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+    const { data: dupes } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('email', email)
+      .eq('check_in', check_in)
+      .eq('check_out', check_out)
+      .eq('payment_status', 'pending')
+      .gte('created_at', dedupeWindow)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (dupes && dupes.length > 0) {
+      return res.status(200).json(dupes[0]);
+    }
+
     const { data, error } = await supabase
       .from('bookings')
       .insert([{
