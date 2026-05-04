@@ -16,6 +16,36 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Missing image_data' });
   }
 
+  // Pre-check: does the targeted booking already have a proof URL?
+  // If yes, refuse to overwrite — direct the guest to Messenger instead.
+  // Prevents silent loss of DP proof when a guest uploads balance via /pay.html.
+  // Remove this guard once D2 (separate balance_proof_url column) ships.
+  let preExisting = null;
+  if (booking_id && !booking_id.startsWith('payment-')) {
+    const { data } = await supabase
+      .from('bookings')
+      .select('id, payment_proof_url')
+      .eq('id', booking_id)
+      .single();
+    preExisting = data;
+  } else if (email) {
+    const { data } = await supabase
+      .from('bookings')
+      .select('id, payment_proof_url')
+      .eq('email', email)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    preExisting = data && data[0];
+  }
+
+  if (preExisting && preExisting.payment_proof_url) {
+    return res.status(409).json({
+      error: 'A payment proof is already on file for this booking. Please send your additional payment receipt via Messenger so we can attach it manually.',
+      messenger: 'https://m.me/comariansplace',
+      reason: 'proof_already_exists',
+    });
+  }
+
   const uploadId = booking_id || ('payment-' + Date.now());
 
   // Decode base64 image

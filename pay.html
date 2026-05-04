@@ -335,6 +335,25 @@
           }),
         });
 
+        // Already has proof on file? Direct guest to Messenger so DP proof
+        // isn't silently overwritten. (Remove once D2 balance-upload ships.)
+        if (res.status === 409) {
+          const body = await res.json();
+          const msgr = body.messenger || 'https://m.me/comariansplace';
+          const balanceMsg = encodeURIComponent(
+            'Hi! I\'m ' + name + '. Pa-attach po sa booking ko ng additional payment receipt na ' +
+            'P' + Number(amount).toLocaleString() + ' (' + payTypeText + ')' +
+            (refNumber ? ' Ref: ' + refNumber : '') + '. Salamat po!'
+          );
+          alert(
+            'You already have a payment proof on file for this booking. ' +
+            'For additional payments (e.g. balance + security deposit), ' +
+            'please send your receipt to us via Messenger and we\'ll attach it for you.'
+          );
+          window.location.href = msgr + '?text=' + balanceMsg;
+          return;
+        }
+
         // Show success
         document.getElementById('confName').textContent = name;
         document.getElementById('confAmount').textContent = 'P' + Number(amount).toLocaleString();
