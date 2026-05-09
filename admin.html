@@ -345,13 +345,14 @@
   }
 
   // Derive expiry from created_at + proof state:
-  //   - No proof yet: 30 min from creation
-  //   - Proof uploaded: up to 24h 30m from creation
+  //   - No proof yet: 4 hours from creation
+  //   - Proof uploaded: 7 days from creation
+  // Must stay in sync with TTLs in api/cleanup.js.
   function computeExpiry(booking) {
     if (!booking.created_at) return null;
     const createdMs = new Date(booking.created_at).getTime();
     const hasProof = !!booking.payment_proof_url;
-    const ttlMs = hasProof ? (24 * 60 + 30) * 60 * 1000 : 30 * 60 * 1000;
+    const ttlMs = hasProof ? 7 * 24 * 60 * 60 * 1000 : 4 * 60 * 60 * 1000;
     return createdMs + ttlMs;
   }
 

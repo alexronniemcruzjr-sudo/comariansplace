@@ -79,7 +79,7 @@ async function notifyOwnerNewInquiry(booking) {
       <tr><td style="padding:6px 0;color:#3d5a3e;font-weight:600;">Expected DP (50%)</td><td style="padding:6px 0;text-align:right;font-weight:700;color:#3d5a3e;font-size:16px;">${peso(dp)}</td></tr>
     </table>
     <p style="font-size:13px;color:#92400e;background:#fef3c7;padding:10px 12px;border-radius:6px;">
-      ⏰ The guest has 30 minutes to pay the <strong>${peso(dp)} downpayment</strong> and upload their proof. If no proof arrives, the inquiry auto-expires and the date stays open.
+      ⏰ The guest has 4 hours to pay the <strong>${peso(dp)} downpayment</strong> and upload their proof. If no proof arrives, the inquiry auto-expires and the date stays open.
     </p>
     <p style="text-align:center;margin-top:20px;">
       <a href="${SITE_URL}/admin.html" style="background:#3d5a3e;color:#fff;padding:10px 22px;text-decoration:none;border-radius:6px;font-size:14px;">Open Admin Panel</a>
@@ -163,10 +163,65 @@ async function notifyLoser(booking) {
   });
 }
 
+// Owner-facing digest sent when cleanup auto-deletes pending bookings.
+// Lists every deleted booking with enough detail for the owner to recreate
+// it manually (or to recognize the guest if they re-inquire). Replaces the
+// previous behavior where deleted bookings vanished without any record.
+async function notifyOwnerCleanupDigest(deletedBookings) {
+  if (!Array.isArray(deletedBookings) || deletedBookings.length === 0) {
+    return { skipped: true };
+  }
+  const rows = deletedBookings.map((b) => `
+    <tr>
+      <td style="padding:8px 6px;border-bottom:1px solid #e8e0d0;font-size:13px;">
+        <strong>${b.guest_name || '(unknown)'}</strong><br/>
+        <span style="color:#6b5a45;font-size:11px;">${b.email || ''}${b.phone ? ' · ' + b.phone : ''}</span>
+      </td>
+      <td style="padding:8px 6px;border-bottom:1px solid #e8e0d0;font-size:13px;">
+        ${formatDate(b.check_in)}<br/>
+        <span style="color:#6b5a45;font-size:11px;">→ ${formatDate(b.check_out)}</span>
+      </td>
+      <td style="padding:8px 6px;border-bottom:1px solid #e8e0d0;font-size:13px;text-align:right;">
+        ${peso(b.total_price)}<br/>
+        <span style="color:${b.payment_proof_url ? '#3d5a3e' : '#92400e'};font-size:11px;">
+          ${b.payment_proof_url ? '✓ proof uploaded' : '✗ no proof'}
+        </span>
+      </td>
+    </tr>
+  `).join('');
+  const html = wrapHtml(`
+    <h3 style="margin-top:0;">${deletedBookings.length} pending booking${deletedBookings.length === 1 ? '' : 's'} auto-expired</h3>
+    <p>The following pending bookings were just removed by the auto-cleanup. They had been sitting in the system unverified past their time limit (4h for no-proof, 7 days for proof-uploaded).</p>
+    <p style="font-size:13px;color:#92400e;background:#fef3c7;padding:10px 12px;border-radius:6px;">
+      📌 If any of these are real guests you confirmed offline, please recreate them via the admin's <strong>Manual Block</strong> so the calendar stays correct.
+    </p>
+    <table style="width:100%;border-collapse:collapse;margin:12px 0;">
+      <thead>
+        <tr style="background:#f5ede0;">
+          <th style="padding:8px 6px;text-align:left;font-size:12px;color:#6b5a45;">Guest</th>
+          <th style="padding:8px 6px;text-align:left;font-size:12px;color:#6b5a45;">Dates</th>
+          <th style="padding:8px 6px;text-align:right;font-size:12px;color:#6b5a45;">Total / Proof</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p style="text-align:center;margin-top:20px;">
+      <a href="${SITE_URL}/admin.html" style="background:#3d5a3e;color:#fff;padding:10px 22px;text-decoration:none;border-radius:6px;font-size:14px;">Open Admin Panel</a>
+    </p>
+  `);
+  return sendMail({
+    to: OWNER_EMAIL,
+    toName: OWNER_NAME,
+    subject: `${deletedBookings.length} pending booking${deletedBookings.length === 1 ? '' : 's'} auto-expired`,
+    html,
+  });
+}
+
 module.exports = {
   sendMail,
   notifyOwnerNewInquiry,
   notifyOwnerProofUploaded,
   notifyGuestConfirmed,
   notifyLoser,
+  notifyOwnerCleanupDigest,
 };

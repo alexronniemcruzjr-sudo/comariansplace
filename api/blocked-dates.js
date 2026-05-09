@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
   // Block dates for:
   //   1. Confirmed bookings — payment_status in (partial, paid)
   //   2. Pending bookings WITH proof uploaded — provisional lock until owner
-  //      verifies in admin. Cleanup auto-removes after 24h30m if owner ignores.
+  //      verifies in admin. Cleanup auto-removes after 7 days if owner ignores.
   // Pending without proof still does NOT block — first to upload proof wins.
   // (Rule changed 2026-05 — old comment said "first to pay wins"; updated because
   // owner can't verify within minutes of upload, so legit paid guests were seeing
