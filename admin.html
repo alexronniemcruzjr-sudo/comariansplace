@@ -204,6 +204,7 @@
   <button class="filter-btn" onclick="setFilter('partial',this)">Partial</button>
   <button class="filter-btn" onclick="setFilter('paid',this)">Paid</button>
   <button class="filter-btn" onclick="openBlockDateModal()" style="background:#3d5a3e;color:#fdfaf5;border-color:#3d5a3e;font-weight:600;">+ Block Date</button>
+  <button class="filter-btn" onclick="openHistoryModal()" style="background:#fdfaf5;color:#3d5a3e;border-color:#3d5a3e;font-weight:600;" title="Search live + archived bookings (e.g. when a guest sends an old receipt screenshot)">🗄️ Search History</button>
   <input type="text" class="search-input" placeholder="Search guest name..." oninput="searchBookings(this.value)"/>
 </div>
 
@@ -269,6 +270,21 @@
     <div id="proofContent"></div>
     <div class="modal-actions">
       <button class="modal-btn cancel" onclick="document.getElementById('proofModal').classList.remove('show')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY SEARCH MODAL -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal" style="max-width:680px;">
+    <h3>🗄️ Search History</h3>
+    <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:8px;">Search live + archived bookings by name, email, or phone. Use this when a guest sends an old receipt and you can't find them on the main dashboard.</p>
+    <input type="text" id="historyQuery" placeholder="e.g. Anna, francesca@gmail.com, 09993501527" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.9rem;margin-bottom:12px;" oninput="onHistoryQueryInput(this.value)" autofocus/>
+    <div id="historyResults" style="max-height:420px;overflow-y:auto;border:1px solid var(--sand-dark);border-radius:8px;background:var(--sand);padding:8px;font-size:0.85rem;">
+      <p style="color:var(--text-light);text-align:center;padding:24px;">Type a name, email, or phone above.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="document.getElementById('historyModal').classList.remove('show')">Close</button>
     </div>
   </div>
 </div>
@@ -635,6 +651,92 @@
       reader.readAsDataURL(file);
     };
     input.click();
+  }
+
+  // ---------- History search modal ----------
+  // Opens the modal that searches both live `bookings` and `bookings_archive`
+  // (auto-archived on every DELETE via Postgres trigger). Use this when a
+  // guest sends an old receipt screenshot but can't be found on the main
+  // dashboard — usually means cleanup auto-deleted them, but the row is
+  // still in the archive.
+  let historyDebounce = null;
+
+  function openHistoryModal() {
+    document.getElementById('historyQuery').value = '';
+    document.getElementById('historyResults').innerHTML =
+      '<p style="color:var(--text-light);text-align:center;padding:24px;">Type a name, email, or phone above.</p>';
+    document.getElementById('historyModal').classList.add('show');
+    setTimeout(() => document.getElementById('historyQuery').focus(), 50);
+  }
+
+  function onHistoryQueryInput(q) {
+    clearTimeout(historyDebounce);
+    const trimmed = (q || '').trim();
+    if (trimmed.length < 2) {
+      document.getElementById('historyResults').innerHTML =
+        '<p style="color:var(--text-light);text-align:center;padding:24px;">Type at least 2 characters.</p>';
+      return;
+    }
+    historyDebounce = setTimeout(() => runHistorySearch(trimmed), 250);
+  }
+
+  async function runHistorySearch(q) {
+    const box = document.getElementById('historyResults');
+    box.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:24px;">Searching…</p>';
+    try {
+      const res = await apiFetch('/api/admin-search?q=' + encodeURIComponent(q));
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Search failed');
+      }
+      const { results } = await res.json();
+      if (!results || results.length === 0) {
+        box.innerHTML = '<p style="color:var(--text-light);text-align:center;padding:24px;">No matches in live or archived bookings.</p>';
+        return;
+      }
+      box.innerHTML = results.map((b) => {
+        const isArchived = b.source === 'archived';
+        const ref = referenceFor(b);
+        const archivedLine = isArchived
+          ? `<div style="font-size:0.72rem;color:#92400e;margin-top:4px;">🗄️ Archived ${formatDate(b.archived_at?.split('T')[0])} · ${esc(b.archive_reason || '')}</div>`
+          : `<div style="font-size:0.72rem;color:#3d5a3e;margin-top:4px;">✅ Live · ${esc(b.payment_status || 'pending')}${b.payment_proof_url ? ' · proof uploaded' : ''}</div>`;
+        const restoreBtn = isArchived
+          ? `<button class="modal-btn confirm" style="margin-top:8px;font-size:0.78rem;padding:6px 12px;" onclick="restoreFromArchive('${b.id}', '${esc(b.guest_name)}', '${b.check_in}', '${b.check_out}')">+ Manual Block from this</button>`
+          : '';
+        return `
+          <div style="background:#fff;border:1px solid var(--sand-dark);border-radius:6px;padding:10px 12px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:start;gap:8px;">
+              <div style="flex:1;min-width:0;">
+                <strong>${esc(b.guest_name || '(no name)')}</strong>
+                <span style="font-family:monospace;font-size:0.72rem;color:var(--text-light);margin-left:6px;">${ref}</span>
+                <div style="font-size:0.78rem;color:var(--text-light);margin-top:2px;">
+                  ${esc(b.email || '')}${b.phone ? ' · ' + esc(b.phone) : ''}
+                </div>
+                <div style="font-size:0.82rem;margin-top:4px;">
+                  ${formatDate(b.check_in)} → ${formatDate(b.check_out)}
+                  · ${b.guests || 1}g · ${esc(b.room_type || '')}
+                  · ₱${Number(b.total_price || 0).toLocaleString()}
+                </div>
+                ${archivedLine}
+              </div>
+            </div>
+            ${restoreBtn}
+          </div>`;
+      }).join('');
+    } catch (err) {
+      box.innerHTML = '<p style="color:#dc2626;text-align:center;padding:24px;">Error: ' + esc(err.message) + '</p>';
+    }
+  }
+
+  // Pre-fill the Manual Block form with an archived booking's data so
+  // the owner can re-block the date in two clicks.
+  function restoreFromArchive(id, name, checkIn, checkOut) {
+    document.getElementById('historyModal').classList.remove('show');
+    openBlockDateModal();
+    document.getElementById('blockGuestName').value = name || '';
+    document.getElementById('blockCheckIn').value = checkIn || '';
+    document.getElementById('blockCheckOut').value = checkOut || '';
+    document.getElementById('blockNote').value = 'Restored from archive (was ' + id.slice(0, 8) + ')';
   }
 
   // Load on page ready
