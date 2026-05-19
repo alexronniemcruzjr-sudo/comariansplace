@@ -6,51 +6,48 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const NO_PROOF_TTL_MS = 4 * 60 * 60 * 1000;        // 4 hours
-const WITH_PROOF_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const NO_PROOF_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 
-// Deletes expired pending bookings. Two rules:
-//   - Pending + no proof uploaded: delete if created_at older than 4 hours
-//                                  (was 30 min — too short for slow uploaders / mobile data)
-//   - Pending + proof uploaded:    delete if created_at older than 7 days
-//                                  (was 24h30m — silently deleted real bookings whose owner
-//                                  hadn't verified yet; owner uses offline Messenger/paper
-//                                  tracking, so 24h was unrealistic. 7d matches her cadence.)
-// Real cases that triggered this widening (2026-05-09):
-//   - Anna Francesca Cunanan paid ₱6,750 DP 2026-05-06 9:01 PM, record gone by 2026-05-07
-//     before owner could verify in admin. Guest had to be asked to redo the booking form.
-//   - Staff "Doc" reported a June 13 double-booking; both records had already been cleaned.
-// Runs via direct call or piggybacks on other API endpoints (see runCleanup export).
+// Cleanup rule (simplified 2026-05-19 after repeat data-loss incidents):
+//
+//   ONLY auto-delete pending bookings with NO proof uploaded (after 4h).
+//   These are abandoned-cart equivalents — guest filled the form but never
+//   paid. Safe to drop.
+//
+//   NEVER auto-delete pending bookings WITH proof uploaded. A proof upload
+//   means the guest sent real money — that record is a REAL reservation
+//   and MUST persist until the owner explicitly verifies (→ partial/paid)
+//   or explicitly rejects (→ manual delete in admin).
+//
+// History of why we landed here:
+//   - Original: 30 min / 24h30m TTLs. Silently deleted real bookings.
+//     Cases: Anna Francesca Cunanan (₱6,750 DP, 2026-05-06).
+//   - 2026-05-09 (commit 411d798): Widened to 4h / 7 days + digest email.
+//     Bought time but didn't fix root cause — owner does offline tracking
+//     and 7 days is still not enough cadence for her to verify in admin.
+//   - 2026-05-19: Iza Giron (June 6-7, ₱13,500) and Hazel Calma (May 25-26,
+//     ₱11,500) both auto-deleted by the 7-day TTL despite being real,
+//     upcoming, proof-uploaded reservations. Owner reported "nagagalit
+//     yung mga guest" — calendar unblocked, new guests overbook, refunds
+//     and reputation damage. Removing the proof-uploaded TTL entirely.
+//
+// Side effect: pending+proof bookings can pile up. Mitigation: admin's
+// "Pending" filter lists them all sorted by date — owner can bulk-clean
+// stale ones manually. Trade-off accepted: over-block > over-cancel.
 async function runCleanup() {
   const now = Date.now();
   const noProofCutoff = new Date(now - NO_PROOF_TTL_MS).toISOString();
-  const withProofCutoff = new Date(now - WITH_PROOF_TTL_MS).toISOString();
 
-  // Select full rows back so we can email the owner a digest before they're gone.
-  // Without this, deleted bookings vanish without any audit trail — a real
-  // problem when offline-tracking owner hasn't seen them yet.
-  const [r1, r2] = await Promise.all([
-    supabase
-      .from('bookings')
-      .delete()
-      .eq('payment_status', 'pending')
-      .is('payment_proof_url', null)
-      .lt('created_at', noProofCutoff)
-      .select('*'),
-    supabase
-      .from('bookings')
-      .delete()
-      .eq('payment_status', 'pending')
-      .not('payment_proof_url', 'is', null)
-      .lt('created_at', withProofCutoff)
-      .select('*'),
-  ]);
+  const { data, error } = await supabase
+    .from('bookings')
+    .delete()
+    .eq('payment_status', 'pending')
+    .is('payment_proof_url', null)
+    .lt('created_at', noProofCutoff)
+    .select('*');
 
-  const deleted = [
-    ...(r1.data || []),
-    ...(r2.data || []),
-  ];
-  const errs = [r1.error, r2.error].filter(Boolean);
+  const deleted = data || [];
+  const errs = error ? [error] : [];
 
   // Best-effort notification — don't block on or fail the cleanup if the
   // email send errors (Brevo down, missing API key, etc.). The deletion

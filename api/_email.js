@@ -191,7 +191,7 @@ async function notifyOwnerCleanupDigest(deletedBookings) {
   `).join('');
   const html = wrapHtml(`
     <h3 style="margin-top:0;">${deletedBookings.length} pending booking${deletedBookings.length === 1 ? '' : 's'} auto-expired</h3>
-    <p>The following pending bookings were just removed by the auto-cleanup. They had been sitting in the system unverified past their time limit (4h for no-proof, 7 days for proof-uploaded).</p>
+    <p>The following pending inquiries were removed by the auto-cleanup. They had <strong>no proof of payment</strong> uploaded within 4 hours of submission — essentially abandoned. <em>(Bookings with proof uploaded are never auto-deleted; they wait for your manual verification in admin.)</em></p>
     <p style="font-size:13px;color:#92400e;background:#fef3c7;padding:10px 12px;border-radius:6px;">
       📌 If any of these are real guests you confirmed offline, please recreate them via the admin's <strong>Manual Block</strong> so the calendar stays correct.
     </p>

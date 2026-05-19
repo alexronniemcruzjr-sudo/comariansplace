@@ -361,19 +361,25 @@
   }
 
   // Derive expiry from created_at + proof state:
-  //   - No proof yet: 4 hours from creation
-  //   - Proof uploaded: 7 days from creation
-  // Must stay in sync with TTLs in api/cleanup.js.
+  //   - No proof yet: 4 hours from creation (auto-deleted by cleanup)
+  //   - Proof uploaded: NEVER auto-deleted — real reservation, requires
+  //     manual verify or reject by owner. Returns null so the UI shows
+  //     no countdown.
+  // Must stay in sync with rules in api/cleanup.js.
   function computeExpiry(booking) {
     if (!booking.created_at) return null;
-    const createdMs = new Date(booking.created_at).getTime();
-    const hasProof = !!booking.payment_proof_url;
-    const ttlMs = hasProof ? 7 * 24 * 60 * 60 * 1000 : 4 * 60 * 60 * 1000;
-    return createdMs + ttlMs;
+    if (booking.payment_proof_url) return null; // never auto-expires
+    return new Date(booking.created_at).getTime() + 4 * 60 * 60 * 1000;
   }
 
   function formatExpires(booking) {
     const expiryMs = computeExpiry(booking);
+    // Proof-uploaded pending bookings never auto-expire — they wait for
+    // owner verification. Surface that explicitly so owner doesn't think
+    // a countdown is hiding.
+    if (!expiryMs && booking.payment_proof_url && booking.payment_status === 'pending') {
+      return { text: 'Awaiting your verification', expired: false };
+    }
     if (!expiryMs) return null;
     const diffMs = expiryMs - Date.now();
     if (diffMs <= 0) return { text: 'Expired', expired: true };
