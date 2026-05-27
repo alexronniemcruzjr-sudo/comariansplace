@@ -945,9 +945,9 @@
         <p class="pricing-months">April, May, November, December + All Philippine Holidays</p>
       </div>
       <div class="pricing-rows">
-        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount">₱11,500</span></div>
-        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount">₱12,500</span></div>
-        <div class="pricing-row"><span class="pricing-day">Saturday and Holidays</span><span class="pricing-amount">₱15,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount">₱14,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount">₱15,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Saturday and Holidays</span><span class="pricing-amount">₱16,500</span></div>
       </div>
     </div>
     <div class="pricing-card offpeak">
@@ -1452,9 +1452,9 @@
 
     let label, price;
     if (isPeak) {
-      if (dow === 6 || isHoliday) { label = isHoliday ? 'Peak: Holiday' : 'Peak: Saturday'; price = 15000; }
-      else if (dow === 5 || dow === 0) { label = 'Peak: Fri/Sun'; price = 12500; }
-      else { label = 'Peak: Mon-Thu'; price = 11500; }
+      if (dow === 6 || isHoliday) { label = isHoliday ? 'Peak: Holiday' : 'Peak: Saturday'; price = 16500; }
+      else if (dow === 5 || dow === 0) { label = 'Peak: Fri/Sun'; price = 15500; }
+      else { label = 'Peak: Mon-Thu'; price = 14000; }
     } else {
       if (dow === 6) { label = 'Off-Peak: Saturday'; price = 14000; }
       else if (dow === 5 || dow === 0) { label = 'Off-Peak: Fri/Sun'; price = 12000; }
