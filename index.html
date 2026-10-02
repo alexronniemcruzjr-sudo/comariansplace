@@ -945,9 +945,9 @@
         <p class="pricing-months">April, May, November, December + All Philippine Holidays</p>
       </div>
       <div class="pricing-rows">
-        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount">₱14,000</span></div>
-        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount">₱15,500</span></div>
-        <div class="pricing-row"><span class="pricing-day">Saturday and Holidays</span><span class="pricing-amount">₱17,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="peak.weekday">₱15,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="peak.friSun">₱17,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Saturday and Holidays</span><span class="pricing-amount" data-rate="peak.saturday">₱18,500</span></div>
       </div>
     </div>
     <div class="pricing-card offpeak">
@@ -956,9 +956,9 @@
         <p class="pricing-months">January, February, March, June to October</p>
       </div>
       <div class="pricing-rows">
-        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount">₱11,000</span></div>
-        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount">₱12,000</span></div>
-        <div class="pricing-row"><span class="pricing-day">Saturday</span><span class="pricing-amount">₱14,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="offPeak.weekday">₱11,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="offPeak.friSun">₱12,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Saturday</span><span class="pricing-amount" data-rate="offPeak.saturday">₱14,500</span></div>
       </div>
     </div>
   </div>
@@ -1441,6 +1441,19 @@
   ]);
 
   const PEAK_MONTHS = new Set([4, 5, 11, 12]);
+
+  // Nightly rates — the ONLY place to change prices. The pricing cards
+  // (data-rate="season.bucket") and the booking calculator both read this.
+  // Peak "saturday" also applies to holidays.
+  const RATES = {
+    peak:    { weekday: 15000, friSun: 17000, saturday: 18500 },
+    offPeak: { weekday: 11500, friSun: 12500, saturday: 14500 },
+  };
+
+  document.querySelectorAll('[data-rate]').forEach(function(el) {
+    const [season, bucket] = el.dataset.rate.split('.');
+    el.textContent = '₱' + RATES[season][bucket].toLocaleString();
+  });
   const DOW_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
   function computeNightRate(dateStr) {
@@ -1452,13 +1465,13 @@
 
     let label, price;
     if (isPeak) {
-      if (dow === 6 || isHoliday) { label = isHoliday ? 'Peak: Holiday' : 'Peak: Saturday'; price = 17500; }
-      else if (dow === 5 || dow === 0) { label = 'Peak: Fri/Sun'; price = 15500; }
-      else { label = 'Peak: Mon-Thu'; price = 14000; }
+      if (dow === 6 || isHoliday) { label = isHoliday ? 'Peak: Holiday' : 'Peak: Saturday'; price = RATES.peak.saturday; }
+      else if (dow === 5 || dow === 0) { label = 'Peak: Fri/Sun'; price = RATES.peak.friSun; }
+      else { label = 'Peak: Mon-Thu'; price = RATES.peak.weekday; }
     } else {
-      if (dow === 6) { label = 'Off-Peak: Saturday'; price = 14000; }
-      else if (dow === 5 || dow === 0) { label = 'Off-Peak: Fri/Sun'; price = 12000; }
-      else { label = 'Off-Peak: Mon-Thu'; price = 11000; }
+      if (dow === 6) { label = 'Off-Peak: Saturday'; price = RATES.offPeak.saturday; }
+      else if (dow === 5 || dow === 0) { label = 'Off-Peak: Fri/Sun'; price = RATES.offPeak.friSun; }
+      else { label = 'Off-Peak: Mon-Thu'; price = RATES.offPeak.weekday; }
     }
     return { label, price };
   }
@@ -1586,9 +1599,9 @@
 
     if (!valid) return;
 
+    // priceStr is already the whole-stay total (see renderPackageDisplay)
     const [roomName, priceStr] = roomVal.split('|');
-    const nights = Math.round((new Date(coVal + 'T00:00:00') - new Date(ciVal + 'T00:00:00')) / 86400000);
-    const totalPrice = parseInt(priceStr) * nights;
+    const totalPrice = parseInt(priceStr);
 
     const btn = document.getElementById('bookBtn');
     btn.disabled = true;
