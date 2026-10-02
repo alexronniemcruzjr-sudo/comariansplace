@@ -205,6 +205,7 @@
   <button class="filter-btn" onclick="setFilter('paid',this)">Paid</button>
   <button class="filter-btn" onclick="openBlockDateModal()" style="background:#3d5a3e;color:#fdfaf5;border-color:#3d5a3e;font-weight:600;">+ Block Date</button>
   <button class="filter-btn" onclick="openHistoryModal()" style="background:#fdfaf5;color:#3d5a3e;border-color:#3d5a3e;font-weight:600;" title="Search live + archived bookings (e.g. when a guest sends an old receipt screenshot)">🗄️ Search History</button>
+  <button class="filter-btn" onclick="openRatesModal()" style="background:#fdfaf5;color:#3d5a3e;border-color:#3d5a3e;font-weight:600;" title="Change room rates, peak months, and extra peak dates">💰 Rates</button>
   <input type="text" class="search-input" placeholder="Search guest name..." oninput="searchBookings(this.value)"/>
 </div>
 
@@ -275,6 +276,51 @@
 </div>
 
 <!-- HISTORY SEARCH MODAL -->
+<!-- Rates Modal -->
+<div class="modal-overlay" id="ratesModal">
+  <div class="modal" style="max-width:640px;max-height:90vh;overflow-y:auto;">
+    <h3>💰 Rates</h3>
+    <p>Change the nightly rates here. The website updates by itself within about a minute — no need to message anyone.</p>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;padding:12px;background:var(--sand);border-radius:8px;">
+      <div>
+        <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">New rates start on (stay date)</label>
+        <input type="date" id="rateEffective" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/>
+        <div style="font-size:0.75rem;color:var(--text-light);margin-top:4px;">Applies to nights on or after this date. Pick a future date to schedule a change ahead of time.</div>
+      </div>
+      <div style="font-size:0.8rem;font-weight:600;color:var(--earth-dark);">Peak season</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;"><label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Mon – Thu</label><input type="number" id="ratePeakWeekday" min="1000" step="100" inputmode="numeric" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/></div><div style="flex:1;min-width:120px;"><label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Fri & Sun</label><input type="number" id="ratePeakFriSun" min="1000" step="100" inputmode="numeric" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/></div><div style="flex:1;min-width:120px;"><label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Sat & Holidays</label><input type="number" id="ratePeakSaturday" min="1000" step="100" inputmode="numeric" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/></div>
+      </div>
+      <div style="font-size:0.8rem;font-weight:600;color:var(--earth-dark);">Off-peak season</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:120px;"><label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Mon – Thu</label><input type="number" id="rateOffWeekday" min="1000" step="100" inputmode="numeric" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/></div><div style="flex:1;min-width:120px;"><label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Fri & Sun</label><input type="number" id="rateOffFriSun" min="1000" step="100" inputmode="numeric" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/></div><div style="flex:1;min-width:120px;"><label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Saturday</label><input type="number" id="rateOffSaturday" min="1000" step="100" inputmode="numeric" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;"/></div>
+      </div>
+      <div>
+        <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Peak months</label>
+        <div style="display:flex;flex-wrap:wrap;gap:6px 4px;"><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="1"/>Jan</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="2"/>Feb</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="3"/>Mar</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="4"/>Apr</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="5"/>May</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="6"/>Jun</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="7"/>Jul</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="8"/>Aug</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="9"/>Sep</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="10"/>Oct</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="11"/>Nov</label><label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:4px;width:64px;"><input type="checkbox" class="rate-month" value="12"/>Dec</label></div>
+      </div>
+      <div>
+        <label style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px;">Extra peak dates (optional)</label>
+        <div style="display:flex;gap:8px;">
+          <input type="date" id="rateExtraDate" style="width:100%;padding:10px 12px;border:1.5px solid var(--sand-dark);border-radius:6px;font-family:inherit;font-size:0.88rem;flex:1;"/>
+          <button class="modal-btn cancel" onclick="addExtraPeakDate()" style="white-space:nowrap;">+ Add date</button>
+        </div>
+        <div id="rateExtraList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+        <div style="font-size:0.75rem;color:var(--text-light);margin-top:4px;">Charged at the Sat &amp; Holidays peak rate. National holidays are already included — add only special dates (e.g. fiesta, newly declared holiday).</div>
+      </div>
+      <button class="modal-btn confirm" id="rateSaveBtn" onclick="saveRates()" style="background:var(--green);color:var(--white);align-self:flex-end;">Save Rates</button>
+    </div>
+
+    <div style="font-size:0.8rem;font-weight:600;color:var(--earth-dark);margin-top:16px;">Saved rate sheets</div>
+    <div id="rateSheetList" style="margin-top:8px;font-size:0.82rem;"></div>
+
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="document.getElementById('ratesModal').classList.remove('show')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="historyModal">
   <div class="modal" style="max-width:680px;">
     <h3>🗄️ Search History</h3>
@@ -743,6 +789,158 @@
     document.getElementById('blockCheckIn').value = checkIn || '';
     document.getElementById('blockCheckOut').value = checkOut || '';
     document.getElementById('blockNote').value = 'Restored from archive (was ' + id.slice(0, 8) + ')';
+  }
+
+  // ---------- Rates modal ----------
+  // Rate sheets live in Supabase (rate_settings) via /api/rates. Each sheet
+  // applies to stay nights on or after its effective_from; saving with an
+  // existing date replaces that sheet. index.html reads the same endpoint.
+  const RATE_INPUTS = {
+    peak_weekday: 'ratePeakWeekday', peak_fri_sun: 'ratePeakFriSun', peak_saturday: 'ratePeakSaturday',
+    offpeak_weekday: 'rateOffWeekday', offpeak_fri_sun: 'rateOffFriSun', offpeak_saturday: 'rateOffSaturday',
+  };
+  let rateSheets = [];
+  let rateExtraDates = [];
+
+  function localToday() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function currentRateSheet() {
+    const today = localToday();
+    let pick = rateSheets[0] || null;
+    for (const s of rateSheets) if (s.effective_from <= today) pick = s;
+    return pick;
+  }
+
+  function fillRateForm(sheet, effective) {
+    document.getElementById('rateEffective').value = effective;
+    for (const f in RATE_INPUTS) document.getElementById(RATE_INPUTS[f]).value = sheet ? sheet[f] : '';
+    const months = sheet ? sheet.peak_months : [4, 5, 11, 12];
+    document.querySelectorAll('.rate-month').forEach(cb => { cb.checked = months.includes(Number(cb.value)); });
+    rateExtraDates = sheet ? (sheet.extra_peak_dates || []).slice() : [];
+    renderExtraPeakDates();
+  }
+
+  function renderExtraPeakDates() {
+    document.getElementById('rateExtraList').innerHTML = rateExtraDates.map(d =>
+      `<span style="background:#fff;border:1px solid var(--sand-dark);border-radius:999px;padding:4px 10px;font-size:0.78rem;">${formatDate(d)} <a href="#" onclick="removeExtraPeakDate('${d}');return false;" style="color:var(--red);text-decoration:none;font-weight:700;margin-left:4px;">×</a></span>`
+    ).join('');
+  }
+
+  function addExtraPeakDate() {
+    const v = document.getElementById('rateExtraDate').value;
+    if (!v) return;
+    if (!rateExtraDates.includes(v)) rateExtraDates.push(v);
+    rateExtraDates.sort();
+    document.getElementById('rateExtraDate').value = '';
+    renderExtraPeakDates();
+  }
+
+  function removeExtraPeakDate(d) {
+    rateExtraDates = rateExtraDates.filter(x => x !== d);
+    renderExtraPeakDates();
+  }
+
+  function renderRateSheets() {
+    const box = document.getElementById('rateSheetList');
+    const current = currentRateSheet();
+    const today = localToday();
+    if (rateSheets.length === 0) {
+      box.innerHTML = '<p>No saved rates yet — the website is using its built-in rates.</p>';
+      return;
+    }
+    const p = n => '₱' + Number(n).toLocaleString();
+    box.innerHTML = rateSheets.slice().reverse().map(s => {
+      const tag = s === current
+        ? '<span class="badge paid">In effect</span>'
+        : (s.effective_from > today ? '<span class="badge partial">Scheduled</span>' : '<span class="badge pending">Past</span>');
+      const del = rateSheets.length > 1
+        ? `<button class="action-btn delete" onclick="deleteRateSheet('${s.id}','${s.effective_from}')">Delete</button>` : '';
+      return `
+        <div style="background:#fff;border:1px solid var(--sand-dark);border-radius:6px;padding:10px 12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+            <strong>From ${formatDate(s.effective_from)}</strong> ${tag}
+          </div>
+          <div style="margin-top:6px;">Peak: ${p(s.peak_weekday)} / ${p(s.peak_fri_sun)} / ${p(s.peak_saturday)}</div>
+          <div>Off-peak: ${p(s.offpeak_weekday)} / ${p(s.offpeak_fri_sun)} / ${p(s.offpeak_saturday)}</div>
+          <div style="color:var(--text-light);font-size:0.75rem;margin-top:2px;">Mon–Thu / Fri &amp; Sun / Saturday${(s.extra_peak_dates || []).length ? ' · ' + s.extra_peak_dates.length + ' extra peak date(s)' : ''}</div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="action-btn" onclick="editRateSheet('${s.id}')" style="background:#dbeafe;color:#1e40af;">Edit</button>
+            ${del}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function loadRateSheets() {
+    const result = await apiFetch('/api/rates');
+    rateSheets = (result && result.ok && Array.isArray(result.body.sheets)) ? result.body.sheets : [];
+    renderRateSheets();
+    return result && result.ok;
+  }
+
+  async function openRatesModal() {
+    document.getElementById('rateSheetList').innerHTML = '<p>Loading…</p>';
+    document.getElementById('ratesModal').classList.add('show');
+    const ok = await loadRateSheets();
+    if (!ok) {
+      document.getElementById('rateSheetList').innerHTML = '<p style="color:#dc2626;">Could not load saved rates. Please try again.</p>';
+    }
+    // Start from the rates in effect now, dated today — owner just edits the numbers
+    fillRateForm(currentRateSheet(), localToday());
+  }
+
+  function editRateSheet(id) {
+    const s = rateSheets.find(x => x.id === id);
+    if (!s) return;
+    fillRateForm(s, s.effective_from);
+    document.querySelector('#ratesModal .modal').scrollTop = 0;
+  }
+
+  async function saveRates() {
+    const payload = { effective_from: document.getElementById('rateEffective').value };
+    if (!payload.effective_from) return alert('Please pick the date the new rates start.');
+    for (const f in RATE_INPUTS) {
+      const n = Number(document.getElementById(RATE_INPUTS[f]).value);
+      if (!Number.isInteger(n) || n < 1000) return alert('Please fill in all six rates (whole pesos, at least ₱1,000).');
+      payload[f] = n;
+    }
+    payload.peak_months = [...document.querySelectorAll('.rate-month:checked')].map(cb => Number(cb.value));
+    payload.extra_peak_dates = rateExtraDates;
+
+    const replacing = rateSheets.some(s => s.effective_from === payload.effective_from);
+    const p = n => '₱' + n.toLocaleString();
+    if (!confirm(
+      (replacing ? 'Replace' : 'Save') + ' rates starting ' + formatDate(payload.effective_from) + '?\n\n' +
+      'Peak: ' + p(payload.peak_weekday) + ' / ' + p(payload.peak_fri_sun) + ' / ' + p(payload.peak_saturday) + '\n' +
+      'Off-peak: ' + p(payload.offpeak_weekday) + ' / ' + p(payload.offpeak_fri_sun) + ' / ' + p(payload.offpeak_saturday)
+    )) return;
+
+    const btn = document.getElementById('rateSaveBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    try {
+      const result = await apiFetch('/api/rates', { method: 'POST', body: JSON.stringify(payload) });
+      if (!result || !result.ok) {
+        alert((result && result.body && result.body.error) || 'Could not save rates.');
+      } else {
+        await loadRateSheets();
+        alert('Rates saved. The website will show them within about a minute.');
+      }
+    } catch (err) {
+      alert('Save failed: ' + err.message);
+    }
+    btn.disabled = false;
+    btn.textContent = 'Save Rates';
+  }
+
+  async function deleteRateSheet(id, effective) {
+    if (!confirm('Delete the rate sheet starting ' + formatDate(effective) + '?')) return;
+    const result = await apiFetch('/api/rates', { method: 'DELETE', body: JSON.stringify({ id }) });
+    if (!result || !result.ok) alert((result && result.body && result.body.error) || 'Could not delete.');
+    await loadRateSheets();
   }
 
   // Load on page ready

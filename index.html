@@ -942,23 +942,23 @@
     <div class="pricing-card peak">
       <div class="pricing-card-header">
         <span class="pricing-badge">Peak Season</span>
-        <p class="pricing-months">April, May, November, December + All Philippine Holidays</p>
+        <p class="pricing-months" id="peakMonthsText">April, May, November, December + All Philippine Holidays</p>
       </div>
       <div class="pricing-rows">
-        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="peak.weekday">₱15,000</span></div>
-        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="peak.friSun">₱17,000</span></div>
-        <div class="pricing-row"><span class="pricing-day">Saturday and Holidays</span><span class="pricing-amount" data-rate="peak.saturday">₱18,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="peak_weekday">₱15,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="peak_fri_sun">₱17,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Saturday and Holidays</span><span class="pricing-amount" data-rate="peak_saturday">₱18,500</span></div>
       </div>
     </div>
     <div class="pricing-card offpeak">
       <div class="pricing-card-header">
         <span class="pricing-badge offpeak-badge">Off-Peak Season</span>
-        <p class="pricing-months">January, February, March, June to October</p>
+        <p class="pricing-months" id="offPeakMonthsText">January, February, March, June to October</p>
       </div>
       <div class="pricing-rows">
-        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="offPeak.weekday">₱11,500</span></div>
-        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="offPeak.friSun">₱12,500</span></div>
-        <div class="pricing-row"><span class="pricing-day">Saturday</span><span class="pricing-amount" data-rate="offPeak.saturday">₱14,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="offpeak_weekday">₱11,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="offpeak_fri_sun">₱12,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Saturday</span><span class="pricing-amount" data-rate="offpeak_saturday">₱14,500</span></div>
       </div>
     </div>
   </div>
@@ -1440,38 +1440,87 @@
     '2028-11-01','2028-11-02','2028-11-30','2028-12-08','2028-12-25','2028-12-30','2028-12-31',
   ]);
 
-  const PEAK_MONTHS = new Set([4, 5, 11, 12]);
-
-  // Nightly rates — the ONLY place to change prices. The pricing cards
-  // (data-rate="season.bucket") and the booking calculator both read this.
-  // Peak "saturday" also applies to holidays.
-  const RATES = {
-    peak:    { weekday: 15000, friSun: 17000, saturday: 18500 },
-    offPeak: { weekday: 11500, friSun: 12500, saturday: 14500 },
-  };
-
-  document.querySelectorAll('[data-rate]').forEach(function(el) {
-    const [season, bucket] = el.dataset.rate.split('.');
-    el.textContent = '₱' + RATES[season][bucket].toLocaleString();
-  });
   const DOW_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // Rate sheets. The owner edits these in admin.html (Rates) — they load from
+  // /api/rates. Each sheet applies to stay nights on or after effective_from.
+  // FALLBACK_SHEET is used only if that call fails or returns nothing; keep it
+  // (and the static ₱ text in the pricing cards) close to the live rates.
+  const FALLBACK_SHEET = {
+    effective_from: '2000-01-01',
+    peak_weekday: 15000, peak_fri_sun: 17000, peak_saturday: 18500, // saturday also = holidays
+    offpeak_weekday: 11500, offpeak_fri_sun: 12500, offpeak_saturday: 14500,
+    peak_months: [4, 5, 11, 12],
+    extra_peak_dates: [],
+  };
+  let rateSheets = [FALLBACK_SHEET];
+
+  // Latest sheet whose effective_from <= the night; earliest sheet otherwise.
+  function sheetFor(dateStr) {
+    let pick = rateSheets[0];
+    for (const s of rateSheets) {
+      if (s.effective_from <= dateStr) pick = s;
+    }
+    return pick;
+  }
+
+  // "January to March, June to October" — runs of 3+ months collapse to a range
+  function describeMonths(months) {
+    const parts = [];
+    for (let i = 0; i < months.length; i++) {
+      let j = i;
+      while (j + 1 < months.length && months[j + 1] === months[j] + 1) j++;
+      if (j - i >= 2) parts.push(MONTH_NAMES[months[i] - 1] + ' to ' + MONTH_NAMES[months[j] - 1]);
+      else for (let k = i; k <= j; k++) parts.push(MONTH_NAMES[months[k] - 1]);
+      i = j;
+    }
+    return parts.join(', ');
+  }
+
+  function renderPricingCards() {
+    const sheet = sheetFor(todayStr);
+    document.querySelectorAll('[data-rate]').forEach(function(el) {
+      el.textContent = '₱' + Number(sheet[el.dataset.rate]).toLocaleString();
+    });
+    const peak = sheet.peak_months || [];
+    const offPeak = [1,2,3,4,5,6,7,8,9,10,11,12].filter(m => !peak.includes(m));
+    document.getElementById('peakMonthsText').textContent =
+      (peak.length ? describeMonths(peak) + ' + ' : '') + 'All Philippine Holidays';
+    document.getElementById('offPeakMonthsText').textContent = describeMonths(offPeak);
+  }
+
+  async function loadRates() {
+    try {
+      const res = await fetch('/api/rates');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (Array.isArray(data.sheets) && data.sheets.length > 0) {
+        rateSheets = data.sheets.slice().sort((a, b) => a.effective_from < b.effective_from ? -1 : 1);
+      }
+    } catch (e) { console.log('Could not load rates — using built-in fallback'); }
+    renderPricingCards();
+    updateSummary();
+  }
+  loadRates();
 
   function computeNightRate(dateStr) {
+    const sheet = sheetFor(dateStr);
     const d = new Date(dateStr + 'T00:00:00');
     const month = d.getMonth() + 1;
     const dow = d.getDay(); // 0 Sun .. 6 Sat
-    const isHoliday = PH_HOLIDAYS.has(dateStr);
-    const isPeak = PEAK_MONTHS.has(month) || isHoliday;
+    const isHoliday = PH_HOLIDAYS.has(dateStr) || (sheet.extra_peak_dates || []).includes(dateStr);
+    const isPeak = (sheet.peak_months || []).includes(month) || isHoliday;
 
     let label, price;
     if (isPeak) {
-      if (dow === 6 || isHoliday) { label = isHoliday ? 'Peak: Holiday' : 'Peak: Saturday'; price = RATES.peak.saturday; }
-      else if (dow === 5 || dow === 0) { label = 'Peak: Fri/Sun'; price = RATES.peak.friSun; }
-      else { label = 'Peak: Mon-Thu'; price = RATES.peak.weekday; }
+      if (dow === 6 || isHoliday) { label = isHoliday ? 'Peak: Holiday' : 'Peak: Saturday'; price = sheet.peak_saturday; }
+      else if (dow === 5 || dow === 0) { label = 'Peak: Fri/Sun'; price = sheet.peak_fri_sun; }
+      else { label = 'Peak: Mon-Thu'; price = sheet.peak_weekday; }
     } else {
-      if (dow === 6) { label = 'Off-Peak: Saturday'; price = RATES.offPeak.saturday; }
-      else if (dow === 5 || dow === 0) { label = 'Off-Peak: Fri/Sun'; price = RATES.offPeak.friSun; }
-      else { label = 'Off-Peak: Mon-Thu'; price = RATES.offPeak.weekday; }
+      if (dow === 6) { label = 'Off-Peak: Saturday'; price = sheet.offpeak_saturday; }
+      else if (dow === 5 || dow === 0) { label = 'Off-Peak: Fri/Sun'; price = sheet.offpeak_fri_sun; }
+      else { label = 'Off-Peak: Mon-Thu'; price = sheet.offpeak_weekday; }
     }
     return { label, price };
   }
