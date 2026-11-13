@@ -945,9 +945,9 @@
         <p class="pricing-months" id="peakMonthsText">April, May, November, December + All Philippine Holidays</p>
       </div>
       <div class="pricing-rows">
-        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="peak_weekday">₱12,000</span></div>
-        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="peak_fri_sun">₱13,000</span></div>
-        <div class="pricing-row"><span class="pricing-day">Saturday and Holidays</span><span class="pricing-amount" data-rate="peak_saturday">₱16,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="peak_weekday">₱11,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="peak_fri_sun">₱12,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Saturday and Holidays</span><span class="pricing-amount" data-rate="peak_saturday">₱15,000</span></div>
       </div>
     </div>
     <div class="pricing-card offpeak">
@@ -956,9 +956,9 @@
         <p class="pricing-months" id="offPeakMonthsText">January, February, March, June to October</p>
       </div>
       <div class="pricing-rows">
-        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="offpeak_weekday">₱11,000</span></div>
-        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="offpeak_fri_sun">₱12,000</span></div>
-        <div class="pricing-row"><span class="pricing-day">Saturday</span><span class="pricing-amount" data-rate="offpeak_saturday">₱14,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Monday to Thursday</span><span class="pricing-amount" data-rate="offpeak_weekday">₱10,000</span></div>
+        <div class="pricing-row"><span class="pricing-day">Friday and Sunday</span><span class="pricing-amount" data-rate="offpeak_fri_sun">₱11,500</span></div>
+        <div class="pricing-row"><span class="pricing-day">Saturday</span><span class="pricing-amount" data-rate="offpeak_saturday">₱13,000</span></div>
       </div>
     </div>
   </div>
@@ -1449,8 +1449,8 @@
   // (and the static ₱ text in the pricing cards) close to the live rates.
   const FALLBACK_SHEET = {
     effective_from: '2000-01-01',
-    peak_weekday: 12000, peak_fri_sun: 13000, peak_saturday: 16000, // saturday also = holidays
-    offpeak_weekday: 11000, offpeak_fri_sun: 12000, offpeak_saturday: 14000,
+    peak_weekday: 11500, peak_fri_sun: 12500, peak_saturday: 15000, // saturday also = holidays
+    offpeak_weekday: 10000, offpeak_fri_sun: 11500, offpeak_saturday: 13000,
     peak_months: [4, 5, 11, 12],
     extra_peak_dates: [],
   };
